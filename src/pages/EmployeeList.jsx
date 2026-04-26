@@ -5,6 +5,62 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { UserPlus, Settings2, Trash2, FileUp, FileText, Search, ChevronLeft, ChevronRight, Eye, Edit3 } from 'lucide-react';
 
+const EmployeeAvatar = ({ employee }) => {
+  const [imageUrl, setImageUrl] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    let objectUrl = null;
+
+    const fetchImage = async () => {
+      try {
+        let endpoint = `/employees/${employee.id}/documents/PROFILE_IMAGE/download`;
+        const profileDoc = employee.documents?.find(d => d.documentType?.toLowerCase() === 'profile_image');
+        
+        if (profileDoc && profileDoc.downloadUrl) {
+          endpoint = profileDoc.downloadUrl.startsWith('/api/v1') 
+            ? profileDoc.downloadUrl.substring(7) 
+            : profileDoc.downloadUrl;
+        }
+
+        const res = await axiosInstance.get(endpoint, { responseType: 'blob' });
+        if (res && res.size > 0 && isMounted) {
+          objectUrl = URL.createObjectURL(res);
+          setImageUrl(objectUrl);
+        }
+      } catch (e) {
+        // Fallback to initials quietly
+      }
+    };
+    
+    // Only fetch if employee object has a valid ID
+    if (employee && employee.id) {
+      fetchImage();
+    }
+
+    return () => {
+      isMounted = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [employee]);
+
+  if (imageUrl) {
+    return (
+      <img 
+        src={imageUrl} 
+        alt={employee.name || 'Employee'} 
+        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--glass-border)' }} 
+      />
+    );
+  }
+
+  return (
+    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '13px', color: '#fff', flexShrink: 0 }}>
+      {employee.name ? employee.name.charAt(0).toUpperCase() : 'U'}
+    </div>
+  );
+};
+
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -264,9 +320,7 @@ const EmployeeList = () => {
                   >
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '13px', color: '#fff', flexShrink: 0 }}>
-                          {emp.name ? emp.name.charAt(0).toUpperCase() : 'U'}
-                        </div>
+                        <EmployeeAvatar employee={emp} />
                         <div>
                           <div style={{ fontWeight: 500 }}>{emp.name}</div>
                           <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{emp.workingEmail}</div>

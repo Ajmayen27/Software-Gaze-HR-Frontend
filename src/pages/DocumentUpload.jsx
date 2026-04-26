@@ -4,6 +4,7 @@ import { axiosInstance } from '../api/axiosInstance';
 import Button from '../components/ui/Button';
 import { UploadCloud, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 const allowedTypes = ['profile_image', 'driving_license', 'pan_card', 'voter_id'];
 
@@ -34,8 +35,9 @@ const DocumentUpload = () => {
       });
       
       setStatuses(prev => ({ ...prev, [docType]: 'success' }));
+      toast.success(`${docType.replace('_', ' ')} uploaded successfully`);
     } catch (error) {
-      alert(`Failed to upload ${docType}. ${error.message}`);
+      toast.error(`Failed to upload ${docType}. ${error.message}`);
       setStatuses(prev => ({ ...prev, [docType]: 'error' }));
     } finally {
       setUploading(false);

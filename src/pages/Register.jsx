@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { axiosInstance } from '../api/axiosInstance';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 const Register = () => {
@@ -21,7 +22,7 @@ const Register = () => {
     setLoading(true);
     try {
       await axiosInstance.post('/auth/register', formData);
-      alert('Registration successful. Please login.');
+      toast.success('Registration successful. Please login.');
       navigate('/login');
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');

@@ -3,10 +3,11 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AuthLayout = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, role } = useAuth();
+  const isEmployee = typeof role === 'string' && role.toUpperCase().includes('EMPLOYEE');
 
   if (loading) return null;
-  if (isAuthenticated) return <Navigate to="/employees" replace />;
+  if (isAuthenticated) return <Navigate to={isEmployee ? '/my-profile' : '/employees'} replace />;
 
   return (
     <div className="auth-layout" style={{ position: 'relative', overflow: 'hidden' }}>

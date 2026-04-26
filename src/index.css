@@ -200,6 +200,15 @@ a:hover {
   margin-top: 4px;
 }
 
+/* Professional Dropdown Options Styling */
+select.input-field option, 
+select option {
+  background-color: #17171d;
+  color: var(--text-main);
+  padding: 12px;
+  font-family: var(--font-family);
+}
+
 /* Layout Utilities */
 .app-container {
   display: flex;

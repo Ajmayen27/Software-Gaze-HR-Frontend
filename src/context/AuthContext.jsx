@@ -7,13 +7,16 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if we have an access token and refresh token on load
     const token = sessionStorage.getItem('accessToken') || localStorage.getItem('refreshToken');
+    const storedRole = sessionStorage.getItem('userRole');
     if (token) {
       setIsAuthenticated(true);
+      setRole(storedRole);
     }
     setLoading(false);
   }, []);
@@ -22,14 +25,35 @@ export const AuthProvider = ({ children }) => {
     try {
       // The API response gets unwrapped by interceptor to just return `data` content
       const data = await axiosInstance.post('/auth/login', { email, password });
-      
+
       const { accessToken, refreshToken } = data;
-      
+
+      let userRole = data.role;
+      if (accessToken) {
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          userRole = payload.role || payload.roles || payload.authorities || userRole;
+          if (Array.isArray(userRole)) userRole = userRole[0];
+          // Handle { authority: "ROLE_EMPLOYEE" } structure from Spring Security
+          if (typeof userRole === 'object' && userRole.authority) {
+            userRole = userRole.authority;
+          }
+        } catch (e) { }
+      }
+
       if (accessToken) sessionStorage.setItem('accessToken', accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      
+      if (userRole) sessionStorage.setItem('userRole', userRole);
+
       setIsAuthenticated(true);
-      navigate('/employees'); // default redirect
+      setRole(userRole);
+
+      // Navigate based on role
+      if (typeof userRole === 'string' && userRole.toUpperCase().includes('EMPLOYEE')) {
+        navigate('/my-profile');
+      } else {
+        navigate('/employees'); // default redirect for admin/other roles
+      }
       return true;
     } catch (error) {
       throw error;
@@ -44,14 +68,16 @@ export const AuthProvider = ({ children }) => {
       // ignore
     } finally {
       sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('userRole');
       localStorage.removeItem('refreshToken');
       setIsAuthenticated(false);
+      setRole(null);
       navigate('/login');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading, role }}>
       {children}
     </AuthContext.Provider>
   );
