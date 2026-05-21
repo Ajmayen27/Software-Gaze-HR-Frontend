@@ -1,80 +1,202 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Users, LogOut, Briefcase, Settings as SettingsIcon, User } from 'lucide-react';
+import NotificationBell from '../components/NotificationBell';
+import {
+  LayoutDashboard, Users, Wallet, Building2,
+  User, Settings, LogOut, ChevronDown,
+  Briefcase, Headset, Building
+} from 'lucide-react';
 
 const DashboardLayout = () => {
   const { isAuthenticated, loading, logout, role } = useAuth();
   const location = useLocation();
   const isEmployee = typeof role === 'string' && role.toUpperCase().includes('EMPLOYEE');
+  const isClient   = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
+  const [openMenus, setOpenMenus] = useState({ payroll: false, organization: false });
 
   if (loading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  const isActive = (path) => location.pathname.startsWith(path) ? 'var(--primary)' : 'var(--text-muted)';
+  const isActive      = (path)  => location.pathname === path || location.pathname.startsWith(path + '/');
+  const isGroupActive = (paths) => paths.some(p => location.pathname.startsWith(p));
+  const toggleMenu    = (menu)  => setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
 
+  const payrollPaths = ['/payroll', '/salary-groups'];
+  const orgPaths     = ['/departments', '/designations', '/locations', '/shifts'];
+
+  // Auto-expand active groups
+  if (isGroupActive(payrollPaths) && !openMenus.payroll) {
+    setTimeout(() => setOpenMenus(prev => ({ ...prev, payroll: true })), 0);
+  }
+  if (isGroupActive(orgPaths) && !openMenus.organization) {
+    setTimeout(() => setOpenMenus(prev => ({ ...prev, organization: true })), 0);
+  }
+
+  // ── Nav Components ───────────────────────────────────────────────────────────
+  const NavItem = ({ to, icon: Icon, children, badge }) => (
+    <Link to={to} className={`nav-item ${isActive(to) ? 'active' : ''}`}>
+      <Icon size={18} className="nav-icon" />
+      <span style={{ flex: 1 }}>{children}</span>
+      {badge && (
+        <span className="badge badge-info" style={{ fontSize: '10px', padding: '1px 6px' }}>{badge}</span>
+      )}
+    </Link>
+  );
+
+  const NavGroup = ({ icon: Icon, label, menuKey, paths, children }) => (
+    <div>
+      <div
+        className={`nav-item ${isGroupActive(paths) ? 'active' : ''}`}
+        onClick={() => toggleMenu(menuKey)}
+      >
+        <Icon size={18} className="nav-icon" />
+        <span style={{ flex: 1 }}>{label}</span>
+        <ChevronDown
+          size={14}
+          style={{
+            transition: 'transform 0.2s',
+            transform: openMenus[menuKey] ? 'rotate(180deg)' : 'rotate(0)',
+          }}
+        />
+      </div>
+      {openMenus[menuKey] && <div style={{ marginTop: '2px' }}>{children}</div>}
+    </div>
+  );
+
+  const NavSubItem = ({ to, children }) => (
+    <Link to={to} className={`nav-sub-item ${isActive(to) ? 'active' : ''}`}>
+      {children}
+    </Link>
+  );
+
+  const SectionLabel = ({ children }) => (
+    <div className="nav-section-label">{children}</div>
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="app-container">
-      {/* Sidebar */}
+      {/* ── Sidebar ────────────────────────────────────────────────────────────── */}
       <aside className="dashboard-sidebar">
-        <div style={{ padding: '24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Briefcase color="var(--primary)" size={28} />
-          <h2 style={{ fontSize: '18px', margin: 0, fontWeight: 600 }}>SoftwareGaze HR</h2>
+        {/* Logo */}
+        <div style={{
+          padding: '16px 18px',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <img
+            src="/logo.png"
+            alt="SoftwareGaze"
+            style={{ height: '32px', objectFit: 'contain' }}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+          <span style={{ display: 'none' }}>
+            <Briefcase color="var(--primary)" size={24} />
+          </span>
         </div>
-        <nav style={{ flex: 1, padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+        {/* Navigation */}
+        <nav style={{
+          flex: 1,
+          padding: '12px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '2px',
+          overflowY: 'auto',
+        }}>
+
+          {/* ── Admin / Manager ────────────────────────────────────────────────── */}
+          {!isEmployee && !isClient && (
+            <>
+              <NavItem to="/dashboard" icon={LayoutDashboard}>Dashboard</NavItem>
+              <NavItem to="/employees" icon={Users}>Employees</NavItem>
+              <NavItem to="/clients"   icon={Building}>Clients</NavItem>
+
+              <SectionLabel>Payroll</SectionLabel>
+              <NavGroup icon={Wallet} label="Payroll" menuKey="payroll" paths={payrollPaths}>
+                <NavSubItem to="/payroll/runs">Payroll Runs</NavSubItem>
+                <NavSubItem to="/payroll/components">Salary Components</NavSubItem>
+                <NavSubItem to="/salary-groups">Salary Groups</NavSubItem>
+              </NavGroup>
+
+              <SectionLabel>Organization</SectionLabel>
+              <NavGroup icon={Building2} label="Organization" menuKey="organization" paths={orgPaths}>
+                <NavSubItem to="/departments">Departments</NavSubItem>
+                <NavSubItem to="/designations">Designations</NavSubItem>
+                <NavSubItem to="/locations">Locations</NavSubItem>
+                <NavSubItem to="/shifts">Shifts</NavSubItem>
+              </NavGroup>
+            </>
+          )}
+
+          {/* ── Support — visible to Admin/Manager and Client ────────────────── */}
           {!isEmployee && (
-            <Link to="/employees" style={{
-              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-              backgroundColor: location.pathname.startsWith('/employees') ? 'rgba(110,86,207,0.1)' : 'transparent',
-              color: isActive('/employees'),
-              fontWeight: location.pathname.startsWith('/employees') ? 600 : 400
-            }}>
-              <Users size={20} />
-              Directory
-            </Link>
+            <>
+              <SectionLabel>Support</SectionLabel>
+              <NavItem to="/support-tickets" icon={Headset}>
+                {isClient ? 'My Tickets' : 'Support Tickets'}
+              </NavItem>
+            </>
           )}
-          
-          {isEmployee && (
-            <Link to="/my-profile" style={{
-              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-              backgroundColor: location.pathname.startsWith('/my-profile') ? 'rgba(110,86,207,0.1)' : 'transparent',
-              color: isActive('/my-profile'),
-              fontWeight: location.pathname.startsWith('/my-profile') ? 600 : 400
-            }}>
-              <User size={20} />
-              My Profile
-            </Link>
-          )}
-          
-          {!isEmployee && (
-            <Link to="/settings" style={{
-              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-              backgroundColor: location.pathname.startsWith('/settings') ? 'rgba(110,86,207,0.1)' : 'transparent',
-              color: isActive('/settings'),
-              fontWeight: location.pathname.startsWith('/settings') ? 600 : 400
-            }}>
-              <SettingsIcon size={20} />
-              Settings
-            </Link>
-          )}
+
+          {/* ── Bottom pinned items ─────────────────────────────────────────────── */}
+          <div style={{
+            marginTop: 'auto',
+            paddingTop: '12px',
+            borderTop: '1px solid var(--border-color)',
+          }}>
+            {!isClient && <NavItem to="/my-profile"     icon={User}>My Profile</NavItem>}
+            {isClient  && <NavItem to="/client-profile" icon={User}>My Profile</NavItem>}
+            {!isEmployee && !isClient && (
+              <NavItem to="/settings" icon={Settings}>Settings</NavItem>
+            )}
+          </div>
         </nav>
-        <div style={{ padding: '24px 16px', borderTop: '1px solid var(--glass-border)' }}>
-          <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--text-muted)' }} onClick={logout}>
-            <LogOut size={20} />
+
+        {/* Logout */}
+        <div style={{ padding: '12px', borderTop: '1px solid var(--border-color)' }}>
+          <button
+            className="btn btn-ghost"
+            style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--text-muted)', fontSize: '13px' }}
+            onClick={logout}
+          >
+            <LogOut size={16} />
             Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* ── Main Content ─────────────────────────────────────────────────────── */}
       <main className="dashboard-main">
-        <header className="dashboard-header animate-fade-in">
+        <header className="dashboard-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-muted)' }}>Overview</h3>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+              SoftwareGaze HR Management
+            </h3>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {/* Profile Avatar Mock */}
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {!isEmployee && !isClient && <NotificationBell />}
+            
+            {role && (
+              <span className="badge badge-info">{role.replace('ROLE_', '')}</span>
+            )}
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: '12px',
+              fontWeight: 600,
+            }}>
+              {role ? role.charAt(role.indexOf('_') + 1) || 'U' : 'U'}
+            </div>
           </div>
         </header>
 

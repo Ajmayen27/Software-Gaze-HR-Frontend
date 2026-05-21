@@ -1,31 +1,40 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { axiosInstance } from '../api/axiosInstance';
-import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { toast } from 'react-hot-toast';
+import Input from '../components/ui/Input';
+import { UserPlus, User, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+};
 
 const Register = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await axiosInstance.post('/auth/register', formData);
-      toast.success('Registration successful. Please login.');
+      await axiosInstance.post('/auth/register', form);
+      alert('Admin account created! Please login.');
       navigate('/login');
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -33,59 +42,78 @@ const Register = () => {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-panel"
-      style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '24px' }}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      style={{ width: '100%', maxWidth: '440px', padding: '0 20px' }}
     >
-      <div style={{ textAlign: 'center' }}>
-        <img src="/logo.png" alt="SoftwareGaze" style={{ height: '48px', marginBottom: '16px' }} />
-        <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>Create Admin Setup</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Register a root administrative account</p>
-      </div>
+      <motion.div variants={itemVariants} style={{ marginBottom: '40px' }}>
+        <span style={{ display: 'inline-block', padding: '4px 12px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '20px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+          Admin Setup
+        </span>
+        <h1 style={{ fontSize: '32px', margin: '0 0 8px 0', fontWeight: '700', letterSpacing: '-0.5px' }}>Create an account</h1>
+        <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '15px' }}>Initial setup for system administrators</p>
+      </motion.div>
 
       {error && (
-        <div style={{ padding: '12px', background: 'rgba(229,72,77,0.1)', border: '1px solid var(--danger)', borderRadius: '8px', color: 'var(--danger)', fontSize: '14px' }}>
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-light)', color: 'var(--danger)', fontSize: '14px', marginBottom: '24px', border: '1px solid rgba(220, 38, 38, 0.2)', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <AlertCircle size={16} />
           {error}
-        </div>
+        </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <Input 
-          label="Full Name" 
-          name="name"
-          placeholder="Admin Name" 
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
-        <Input 
-          label="Email Address" 
-          type="email" 
-          name="email"
-          placeholder="admin@company.com" 
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <Input 
-          label="Password" 
-          type="password" 
-          name="password"
-          placeholder="Min 8 characters" 
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <motion.div variants={itemVariants}>
+          <Input 
+            label="Full Name" 
+            icon={User}
+            value={form.name} 
+            onChange={(e) => setForm({ ...form, name: e.target.value })} 
+            required 
+            placeholder="John Doe" 
+          />
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <Input 
+            label="Email Address" 
+            type="email" 
+            icon={Mail}
+            value={form.email} 
+            onChange={(e) => setForm({ ...form, email: e.target.value })} 
+            required 
+            placeholder="admin@company.com" 
+          />
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <Input 
+            label="Password" 
+            type="password" 
+            icon={Lock}
+            value={form.password} 
+            onChange={(e) => setForm({ ...form, password: e.target.value })} 
+            required 
+            placeholder="Minimum 8 characters" 
+          />
+        </motion.div>
 
-        <Button type="submit" loading={loading} style={{ marginTop: '8px' }}>
-          Register Account
-        </Button>
+        <motion.div variants={itemVariants} style={{ marginTop: '8px' }}>
+          <Button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '15px', justifyContent: 'center' }} disabled={loading}>
+            {loading ? <div className="spinner" /> : (
+              <>Create Account <ArrowRight size={18} style={{ marginLeft: '4px' }} /></>
+            )}
+          </Button>
+        </motion.div>
       </form>
-      
-      <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>
-        Already have an account? <Link to="/login" style={{ fontWeight: 500 }}>Sign In</Link>
-      </div>
+
+      <motion.div variants={itemVariants} style={{ textAlign: 'center', marginTop: '32px', fontSize: '14px', color: 'var(--text-muted)' }}>
+        Already have an account? <Link to="/login" style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>Sign in</Link>
+      </motion.div>
     </motion.div>
   );
 };

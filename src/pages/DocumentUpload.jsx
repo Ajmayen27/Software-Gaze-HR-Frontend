@@ -51,13 +51,13 @@ const DocumentUpload = () => {
         <p style={{ color: 'var(--text-muted)', margin: 0 }}>Attach required KYC and ID files for Employee #{id}</p>
       </div>
 
-      <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {allowedTypes.map((type) => {
            const label = type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
            const status = statuses[type];
 
            return (
-             <div key={type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'var(--input-bg)' }}>
+             <div key={type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-body)' }}>
                <div>
                  <h4 style={{ margin: '0 0 4px 0' }}>{label}</h4>
                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Max size: 10MB (PDF/JPG/PNG)</p>

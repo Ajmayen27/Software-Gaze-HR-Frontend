@@ -49,10 +49,17 @@ export const AuthProvider = ({ children }) => {
       setRole(userRole);
 
       // Navigate based on role
-      if (typeof userRole === 'string' && userRole.toUpperCase().includes('EMPLOYEE')) {
-        navigate('/my-profile');
+      if (typeof userRole === 'string') {
+        const roleUpper = userRole.toUpperCase();
+        if (roleUpper.includes('EMPLOYEE')) {
+          navigate('/my-profile');
+        } else if (roleUpper.includes('CLIENT')) {
+          navigate('/client-profile');
+        } else {
+          navigate('/dashboard'); // default redirect for admin/other roles
+        }
       } else {
-        navigate('/employees'); // default redirect for admin/other roles
+        navigate('/dashboard');
       }
       return true;
     } catch (error) {
