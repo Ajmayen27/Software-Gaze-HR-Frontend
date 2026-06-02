@@ -97,21 +97,21 @@ const ClientFormModal = ({ client, onClose, onSaved }) => {
             <Input label="Full Name *" value={form.name} onChange={e => handleChange('name', e.target.value)} error={errors.name} placeholder="e.g. John Smith" />
             <Input label="Company Name" value={form.companyName} onChange={e => handleChange('companyName', e.target.value)} placeholder="e.g. Acme Corp" />
           </div>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <Input label="Contact Email *" type="email" value={form.contactEmail} onChange={e => handleChange('contactEmail', e.target.value)} error={errors.contactEmail} placeholder="email@company.com" />
-            <Input label="Phone Number" value={form.phone} onChange={e => handleChange('phone', e.target.value)} placeholder="+1 555 000 0000" />
+            <Input label="Phone Number" value={form.phone} onChange={e => handleChange('phone', e.target.value)} placeholder="+880" />
           </div>
 
           <Input label="Physical Address" value={form.address} onChange={e => handleChange('address', e.target.value)} placeholder="Street, City, Country" />
-          
-          <Input 
-            label={isEdit ? 'New Password (Optional)' : 'Account Password *'} 
-            type="password" 
-            value={form.password} 
-            onChange={e => handleChange('password', e.target.value)} 
-            error={errors.password} 
-            placeholder={isEdit ? 'Leave blank to keep current password' : 'Min. 8 characters'} 
+
+          <Input
+            label={isEdit ? 'New Password (Optional)' : 'Account Password *'}
+            type="password"
+            value={form.password}
+            onChange={e => handleChange('password', e.target.value)}
+            error={errors.password}
+            placeholder={isEdit ? 'Leave blank to keep current password' : 'Min. 8 characters'}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
@@ -201,11 +201,11 @@ const ClientList = () => {
 
   const filtered = search
     ? clients.filter(c =>
-        c.name?.toLowerCase().includes(search.toLowerCase()) ||
-        c.contactEmail?.toLowerCase().includes(search.toLowerCase()) ||
-        c.companyName?.toLowerCase().includes(search.toLowerCase()) ||
-        c.clientId?.toLowerCase().includes(search.toLowerCase())
-      )
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.contactEmail?.toLowerCase().includes(search.toLowerCase()) ||
+      c.companyName?.toLowerCase().includes(search.toLowerCase()) ||
+      c.clientId?.toLowerCase().includes(search.toLowerCase())
+    )
     : clients;
 
   return (

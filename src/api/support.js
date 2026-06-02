@@ -19,6 +19,11 @@ export const getMessages = (id) =>
 export const addMessage = (id, data) =>
   axiosInstance.post(`/support-tickets/${id}/messages`, data);
 
+export const uploadMessageAttachments = (id, formData) =>
+  axiosInstance.post(`/support-tickets/${id}/message-attachments`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
 // ── Workflow Actions (Admin/Manager) ─────────────────────────────────────────
 
 export const assignTicket = (id, data) =>

@@ -2,14 +2,16 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Send, UserCircle2, Shield, Clock, Tag, AlertTriangle,
-  CheckCircle2, XCircle, RotateCcw, UserCheck, X, Check, MessageSquare
+  CheckCircle2, XCircle, RotateCcw, UserCheck, X, Check, MessageSquare, Image
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
-  getTicketById, getMessages, addMessage,
+  getTicketById, getMessages, uploadMessageAttachments,
   assignTicket, resolveTicket, closeTicket, reopenTicket
 } from '../../api/support';
 import { useAuth } from '../../context/AuthContext';
+import { Client } from '@stomp/stompjs';
+import { axiosInstance } from '../../api/axiosInstance';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -156,6 +158,43 @@ const ResolveModal = ({ onClose, onDone }) => {
   );
 };
 
+// ── Authenticated Attachment ──────────────────────────────────────────────────
+const AuthenticatedAttachment = ({ attachment, onClick }) => {
+  const [imgUrl, setImgUrl] = useState(null);
+
+  useEffect(() => {
+    let objUrl;
+    const fetchBlob = async () => {
+      try {
+        const absoluteUrl = attachment.downloadUrl.startsWith('http') 
+          ? attachment.downloadUrl 
+          : `http://localhost:8081${attachment.downloadUrl}`;
+        const res = await axiosInstance.get(absoluteUrl, { responseType: 'blob' });
+        // axiosInstance interceptor unwraps response.data, so res is the Blob
+        objUrl = URL.createObjectURL(res);
+        setImgUrl(objUrl);
+      } catch (e) {
+        console.error('Failed to load attachment', e);
+      }
+    };
+    fetchBlob();
+    return () => { if (objUrl) URL.revokeObjectURL(objUrl); };
+  }, [attachment.downloadUrl]);
+
+  return (
+    <div onClick={() => { if (imgUrl) onClick(imgUrl); }} title="Click to view"
+       style={{ display: 'block', overflow: 'hidden', borderRadius: 4, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: imgUrl ? 'pointer' : 'default' }}>
+      {imgUrl ? (
+        <img src={imgUrl} alt={attachment.fileName} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
+      ) : (
+        <div style={{ width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.05)' }}>
+          <span className="spinner" style={{ width: 20, height: 20 }} />
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const TicketDetail = () => {
   const { id } = useParams();
@@ -169,16 +208,22 @@ const TicketDetail = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msgText, setMsgText] = useState('');
+  const [files, setFiles] = useState([]);
   const [sending, setSending] = useState(false);
   const [modal, setModal] = useState(null); // 'assign' | 'resolve'
+  const [lightboxImg, setLightboxImg] = useState(null);
   const [actionLoading, setActionLoading] = useState('');
+  const stompClientRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const [tRes, mRes] = await Promise.all([getTicketById(id), getMessages(id)]);
       setTicket(tRes?.data || tRes);
-      setMessages(Array.isArray(mRes?.data || mRes) ? (mRes?.data || mRes) : []);
+      const rawMsgs = Array.isArray(mRes?.data || mRes) ? (mRes?.data || mRes) : [];
+      // Sort ascending by ID to ensure newest messages appear at the bottom
+      const sortedMsgs = [...rawMsgs].sort((a, b) => a.id - b.id);
+      setMessages(sortedMsgs);
     } catch {
       toast.error('Failed to load ticket');
     } finally { setLoading(false); }
@@ -186,19 +231,86 @@ const TicketDetail = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Establish WebSocket Connection
+  useEffect(() => {
+    if (!id) return;
+    
+    const token = sessionStorage.getItem('accessToken');
+    const client = new Client({
+      brokerURL: `ws://localhost:8081/api/v1/ws?token=${token}`,
+      reconnectDelay: 5000,
+      onConnect: () => {
+        console.log('Connected to WebSocket');
+        client.subscribe(`/topic/support-tickets/${id}/messages`, function (message) {
+          if (message.body) {
+            const newMsg = JSON.parse(message.body);
+            setMessages(prev => {
+              // Prevent duplicate if sent via REST and also received via WS
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error('Broker reported error: ' + frame.headers['message']);
+        console.error('Additional details: ' + frame.body);
+      }
+    });
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      if (client.active) {
+        client.deactivate();
+      }
+    };
+  }, [id]);
+
   useEffect(() => {
     if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!msgText.trim()) return;
+    if (!msgText.trim() && files.length === 0) return;
     setSending(true);
     try {
-      const res = await addMessage(id, { message: msgText.trim() });
-      const newMsg = res?.data || res;
-      setMessages(prev => [...prev, newMsg]);
+      let attachmentIds = [];
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        const uploadRes = await uploadMessageAttachments(id, formData);
+        
+        // Handle unwrapped array or standard axios response gracefully
+        let uploadedData = [];
+        if (Array.isArray(uploadRes)) {
+          uploadedData = uploadRes;
+        } else if (Array.isArray(uploadRes?.data)) {
+          uploadedData = uploadRes.data;
+        } else if (Array.isArray(uploadRes?.data?.data)) {
+          uploadedData = uploadRes.data.data;
+        }
+        
+        attachmentIds = uploadedData.map(att => att.id);
+      }
+      
+      const payload = {};
+      if (msgText.trim()) payload.message = msgText.trim();
+      if (attachmentIds.length > 0) payload.attachmentIds = attachmentIds;
+
+      if (stompClientRef.current && stompClientRef.current.active) {
+        stompClientRef.current.publish({
+          destination: `/app/support-tickets/${id}/messages`,
+          body: JSON.stringify(payload)
+        });
+      } else {
+        toast.error('Not connected to live chat. Please refresh.');
+      }
+
       setMsgText('');
+      setFiles([]);
     } catch {
       toast.error('Failed to send message');
     } finally { setSending(false); }
@@ -319,7 +431,14 @@ const TicketDetail = () => {
                           color: isAdminMsg ? 'var(--text-primary)' : '#fff',
                           fontSize: 13, lineHeight: 1.5, border: isAdminMsg ? '1px solid var(--border-light)' : 'none'
                         }}>
-                          {msg.message}
+                          {msg.message && <div style={{ marginBottom: msg.attachments?.length ? 8 : 0 }}>{msg.message}</div>}
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {msg.attachments.map(att => (
+                                <AuthenticatedAttachment key={att.id} attachment={att} onClick={setLightboxImg} />
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -332,21 +451,49 @@ const TicketDetail = () => {
             {/* Message Input */}
             {!['CLOSED'].includes(ticket.status) && (
               <div style={{ borderTop: '1px solid var(--border-light)', padding: '14px 18px' }}>
-                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 8 }}>
-                  <textarea
-                    className="input-field"
-                    rows={2}
-                    style={{ resize: 'none', flex: 1, fontSize: 13 }}
-                    placeholder="Type your message…"
-                    value={msgText}
-                    onChange={e => setMsgText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
-                  />
-                  <button type="submit" className="btn btn-primary" disabled={sending || !msgText.trim()} style={{ alignSelf: 'flex-end', padding: '9px 14px' }}>
-                    {sending ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <Send size={16} />}
-                  </button>
+                <form onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                    <label className="btn btn-ghost" style={{ padding: '9px 12px', cursor: 'pointer', alignSelf: 'flex-end', marginBottom: 2 }}>
+                      <Image size={18} color="var(--text-secondary)" />
+                      <input type="file" multiple accept="image/jpeg, image/png, image/webp" style={{ display: 'none' }}
+                        onChange={e => {
+                          const newFiles = Array.from(e.target.files);
+                          if (files.length + newFiles.length > 3) { toast.error('Max 3 pictures allowed'); return; }
+                          const valid = newFiles.filter(f => f.size <= 5 * 1024 * 1024);
+                          if (valid.length < newFiles.length) toast.error('Some files exceed 5MB limit');
+                          setFiles(prev => [...prev, ...valid].slice(0, 3));
+                          e.target.value = '';
+                        }} />
+                    </label>
+                    <textarea
+                      className="input-field"
+                      rows={2}
+                      style={{ resize: 'none', flex: 1, fontSize: 13 }}
+                      placeholder="Type your message…"
+                      value={msgText}
+                      onChange={e => setMsgText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
+                    />
+                    <button type="submit" className="btn btn-primary" disabled={sending || (!msgText.trim() && files.length === 0)} style={{ alignSelf: 'flex-end', padding: '9px 14px' }}>
+                      {sending ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <Send size={16} />}
+                    </button>
+                  </div>
+                  
+                  {files.length > 0 && (
+                    <div style={{ display: 'flex', gap: 8, paddingLeft: 46 }}>
+                      {files.map((file, i) => (
+                        <div key={i} style={{ position: 'relative', width: 50, height: 50 }}>
+                          <img src={URL.createObjectURL(file)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-light)' }} />
+                          <button type="button" onClick={() => setFiles(f => f.filter((_, idx) => idx !== i))}
+                            style={{ position: 'absolute', top: -6, right: -6, background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </form>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Press Enter to send, Shift+Enter for new line.</p>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, paddingLeft: 46 }}>Press Enter to send, Shift+Enter for new line. Max 3 pictures (5MB each).</p>
               </div>
             )}
           </div>
@@ -409,6 +556,18 @@ const TicketDetail = () => {
       {/* Modals */}
       {modal === 'assign' && <AssignModal onClose={() => setModal(null)} onDone={() => { setModal(null); fetchAll(); }} />}
       {modal === 'resolve' && <ResolveModal onClose={() => setModal(null)} onDone={() => { setModal(null); fetchAll(); }} />}
+      
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div className="modal-overlay" onClick={() => setLightboxImg(null)} style={{ zIndex: 9999, padding: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)' }}>
+          <button onClick={() => setLightboxImg(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s' }} 
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'} 
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}>
+            <X size={24} />
+          </button>
+          <img src={lightboxImg} alt="Full screen preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 };
