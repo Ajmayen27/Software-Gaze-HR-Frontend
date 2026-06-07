@@ -14,7 +14,7 @@ const AuthLayout = () => {
   return (
     <div className="auth-layout-container">
       {/* Absolute Professional Logo placement at Top Left */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -63,7 +63,7 @@ const AuthLayout = () => {
         />
 
         <div className="visual-content">
-          <motion.div 
+          <motion.div
             className="visual-icon-wrapper"
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -71,7 +71,7 @@ const AuthLayout = () => {
           >
             <Briefcase size={36} color="#fff" />
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -18,7 +18,7 @@ const Settings = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState([]); // needed for Designation lookup
-  
+
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -39,11 +39,11 @@ const Settings = () => {
     try {
       const res = await axiosInstance.get(tab.endpoint);
       setData(toArray(res));
-      
+
       // If Designations tab, we need departments for dropdowns
       if (tab.label === 'Designations') {
-         const deptRes = await axiosInstance.get('/departments');
-         setDepartments(toArray(deptRes));
+        const deptRes = await axiosInstance.get('/departments');
+        setDepartments(toArray(deptRes));
       }
     } catch (err) {
       alert('Failed to load data: ' + err.message);
@@ -117,7 +117,7 @@ const Settings = () => {
 
       <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
         {TABS.map((t, idx) => (
-          <div key={t.label} onClick={() => setActiveTab(idx)} style={{ 
+          <div key={t.label} onClick={() => setActiveTab(idx)} style={{
             padding: '8px 16px', cursor: 'pointer', borderRadius: '8px', fontWeight: activeTab === idx ? 600 : 400,
             background: activeTab === idx ? 'var(--primary)' : 'transparent',
             color: activeTab === idx ? '#fff' : 'var(--text-muted)',
@@ -132,7 +132,7 @@ const Settings = () => {
         <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)' }}>
           <h3 style={{ margin: 0 }}>{tab.label} Dictionary</h3>
           <Button onClick={() => handleOpenModal()} className="btn-primary" style={{ padding: '6px 12px' }}>
-             <Plus size={16} /> Add {tab.label.slice(0, -1)}
+            <Plus size={16} /> Add {tab.label.slice(0, -1)}
           </Button>
         </div>
 
@@ -160,10 +160,10 @@ const Settings = () => {
                     <td style={{ padding: '12px 24px', color: 'var(--text-muted)' }}>{row.id}</td>
                     <td style={{ padding: '12px 24px', fontWeight: 500 }}>{row.name}</td>
                     {tab.fields.map(f => (
-                       f !== 'name' && f !== 'departmentId' && <td key={f} style={{ padding: '12px 24px', color: 'var(--text-muted)' }}>{row[f]}</td>
+                      f !== 'name' && f !== 'departmentId' && <td key={f} style={{ padding: '12px 24px', color: 'var(--text-muted)' }}>{row[f]}</td>
                     ))}
                     {tab.label === 'Designations' && <td style={{ padding: '12px 24px', color: 'var(--text-muted)' }}>{row.department?.name}</td>}
-                    
+
                     <td style={{ padding: '12px 24px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <Button variant="ghost" style={{ padding: '6px' }} onClick={() => handleOpenModal(row)}>
@@ -189,21 +189,21 @@ const Settings = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-panel" style={{ width: '400px', background: 'var(--bg-color)' }}>
               <h2 style={{ fontSize: '20px', marginBottom: '24px' }}>{editingItem ? 'Edit' : 'Add'} {tab.label.slice(0, -1)}</h2>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                
+
                 {tab.fields.map(f => {
-                   if (f === 'description') return <Input key={f} label="Description" name={f} value={formData[f] || ''} onChange={handleChange} />;
-                   if (f === 'startTime' || f === 'endTime') return <Input key={f} type="time" label={f.replace(/([A-Z])/g, ' $1')} name={f} value={formData[f] || ''} onChange={handleChange} step="1" required />;
-                   if (f === 'basicSalaryPercentage') return <Input key={f} type="number" label="Basic Salary %" name={f} value={formData[f] || ''} onChange={handleChange} required />;
-                   if (f === 'departmentId') return (
-                     <div key={f} className="input-group">
-                       <label className="input-label">Department Mapping</label>
-                       <select className="input-field" name={f} value={formData[f] || ''} onChange={handleChange} required>
-                         <option value="">Select Department...</option>
-                         {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                       </select>
-                     </div>
-                   );
-                   return <Input key={f} label={f.charAt(0).toUpperCase() + f.slice(1)} name={f} value={formData[f] || ''} onChange={handleChange} required />;
+                  if (f === 'description') return <Input key={f} label="Description" name={f} value={formData[f] || ''} onChange={handleChange} />;
+                  if (f === 'startTime' || f === 'endTime') return <Input key={f} type="time" label={f.replace(/([A-Z])/g, ' $1')} name={f} value={formData[f] || ''} onChange={handleChange} step="1" required />;
+                  if (f === 'basicSalaryPercentage') return <Input key={f} type="number" label="Basic Salary %" name={f} value={formData[f] || ''} onChange={handleChange} required />;
+                  if (f === 'departmentId') return (
+                    <div key={f} className="input-group">
+                      <label className="input-label">Department Mapping</label>
+                      <select className="input-field" name={f} value={formData[f] || ''} onChange={handleChange} required>
+                        <option value="">Select Department...</option>
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                    </div>
+                  );
+                  return <Input key={f} label={f.charAt(0).toUpperCase() + f.slice(1)} name={f} value={formData[f] || ''} onChange={handleChange} required />;
                 })}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>

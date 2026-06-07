@@ -20,7 +20,7 @@ const EmployeeWizard = () => {
   const [lookups, setLookups] = useState(null);
   const [designations, setDesignations] = useState([]);
   const [employees, setEmployees] = useState([]); // For reportTo dropdown
-  
+
   const [formData, setFormData] = useState({
     // Basic Info (Tab 0)
     name: '',
@@ -85,50 +85,50 @@ const EmployeeWizard = () => {
         } catch { }
 
         if (isEdit) {
-           const res = await axiosInstance.get(`/employees/${id}`);
-           const emp = res.data || res;
-           
-           setFormData({
-             name: emp.name || '',
-             employeeId: emp.employeeId || '',
-             workingEmail: emp.workingEmail || '',
-             workingPhone: emp.workingPhone || '',
-             profileImageUrl: emp.profileImageUrl || '',
-             joiningDate: emp.joiningDate || '',
-             status: emp.status || 'ACTIVE',
-             address: emp.address || '',
-             allowLogin: emp.allowLogin || false,
-             password: '',
-             gender: emp.gender || 'MALE',
-             dateOfBirth: emp.dateOfBirth || '',
-             personalEmail: emp.personalEmail || '',
-             personalPhone: emp.personalPhone || '',
-             married: emp.married || false,
-             locationId: emp.location?.id || '',
-             shiftId: emp.shift?.id || '',
-             departmentId: emp.department?.id || '',
-             designationId: emp.designation?.id || '',
-             reportToId: emp.reportTo?.id || '',
-             manager: emp.manager || false,
-             probationStartDate: emp.probationStartDate || '',
-             probationEndDate: emp.probationEndDate || '',
-             noticeStartDate: emp.noticeStartDate || '',
-             noticeEndDate: emp.noticeEndDate || '',
-             endDate: emp.endDate || '',
-             employeeWorkStatus: emp.employeeWorkStatus || 'FULL_TIME',
-             salaryGroupId: emp.salaryGroup?.id || '',
-             annualCtc: emp.annualCtc || '',
-             drivingLicenseNumber: emp.drivingLicenseNumber || '',
-             panNumber: emp.panNumber || '',
-             voterIdNumber: emp.voterIdNumber || '',
-             accountType: emp.bankAccounts?.[0]?.accountType || 'SAVINGS',
-             accountHolderName: emp.bankAccounts?.[0]?.accountHolderName || '',
-             accountNumber: emp.bankAccounts?.[0]?.accountNumber || '',
-             ifscCode: emp.bankAccounts?.[0]?.ifscCode || '',
-             drivingLicenseDocUrl: '',
-             panCardDocUrl: '',
-             voterIdDocUrl: '',
-           });
+          const res = await axiosInstance.get(`/employees/${id}`);
+          const emp = res.data || res;
+
+          setFormData({
+            name: emp.name || '',
+            employeeId: emp.employeeId || '',
+            workingEmail: emp.workingEmail || '',
+            workingPhone: emp.workingPhone || '',
+            profileImageUrl: emp.profileImageUrl || '',
+            joiningDate: emp.joiningDate || '',
+            status: emp.status || 'ACTIVE',
+            address: emp.address || '',
+            allowLogin: emp.allowLogin || false,
+            password: '',
+            gender: emp.gender || 'MALE',
+            dateOfBirth: emp.dateOfBirth || '',
+            personalEmail: emp.personalEmail || '',
+            personalPhone: emp.personalPhone || '',
+            married: emp.married || false,
+            locationId: emp.location?.id || '',
+            shiftId: emp.shift?.id || '',
+            departmentId: emp.department?.id || '',
+            designationId: emp.designation?.id || '',
+            reportToId: emp.reportTo?.id || '',
+            manager: emp.manager || false,
+            probationStartDate: emp.probationStartDate || '',
+            probationEndDate: emp.probationEndDate || '',
+            noticeStartDate: emp.noticeStartDate || '',
+            noticeEndDate: emp.noticeEndDate || '',
+            endDate: emp.endDate || '',
+            employeeWorkStatus: emp.employeeWorkStatus || 'FULL_TIME',
+            salaryGroupId: emp.salaryGroup?.id || '',
+            annualCtc: emp.annualCtc || '',
+            drivingLicenseNumber: emp.drivingLicenseNumber || '',
+            panNumber: emp.panNumber || '',
+            voterIdNumber: emp.voterIdNumber || '',
+            accountType: emp.bankAccounts?.[0]?.accountType || 'SAVINGS',
+            accountHolderName: emp.bankAccounts?.[0]?.accountHolderName || '',
+            accountNumber: emp.bankAccounts?.[0]?.accountNumber || '',
+            ifscCode: emp.bankAccounts?.[0]?.ifscCode || '',
+            drivingLicenseDocUrl: '',
+            panCardDocUrl: '',
+            voterIdDocUrl: '',
+          });
         } else {
           // Fetch next auto-generated employee ID for new employees
           try {
@@ -175,7 +175,7 @@ const EmployeeWizard = () => {
 
     try {
       setSubmitting(true);
-      
+
       const payload = {
         name: formData.name,
         employeeId: formData.employeeId || null,
@@ -274,7 +274,7 @@ const EmployeeWizard = () => {
       {/* Tab Navigation */}
       <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--border-color)', overflowX: 'auto' }}>
         {tabs.map((t, idx) => (
-          <div key={t} onClick={() => setActiveTab(idx)} style={{ 
+          <div key={t} onClick={() => setActiveTab(idx)} style={{
             padding: '8px 16px', cursor: 'pointer', whiteSpace: 'nowrap',
             fontSize: '13px', fontWeight: activeTab === idx ? 600 : 400,
             color: activeTab === idx ? 'var(--primary)' : 'var(--text-muted)',
@@ -292,14 +292,14 @@ const EmployeeWizard = () => {
           <AnimatePresence mode='wait'>
             <motion.div key={activeTab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
               style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              
+
               {/* ────── TAB 0: BASIC INFO ────── */}
               {activeTab === 0 && (
                 <>
                   <Input label="Full Name *" name="name" value={formData.name} onChange={handleChange} required placeholder="Employee full name" />
                   <Input label={`Employee ID ${nextEmployeeId ? `(Next: ${nextEmployeeId})` : '(Auto-generated)'}`} name="employeeId" value={formData.employeeId} onChange={handleChange} placeholder={nextEmployeeId || 'Leave blank to auto-generate'} />
                   <Input label="Work Email *" type="email" name="workingEmail" value={formData.workingEmail} onChange={handleChange} required placeholder="name@company.com" />
-                  <Input label="Work Phone" name="workingPhone" value={formData.workingPhone} onChange={handleChange} placeholder="+880-1234-567890" />
+                  <Input label="Work Phone" name="workingPhone" value={formData.workingPhone} onChange={handleChange} placeholder="+880 1763111024" />
                   <Input label="Joining Date *" type="date" name="joiningDate" value={formData.joiningDate} onChange={handleChange} required />
                   <div className="input-group">
                     <label className="input-label">Status</label>
@@ -334,7 +334,7 @@ const EmployeeWizard = () => {
                   </div>
                   <Input label="Date of Birth" type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} />
                   <Input label="Personal Email" type="email" name="personalEmail" value={formData.personalEmail} onChange={handleChange} placeholder="personal@email.com" />
-                  <Input label="Personal Phone" name="personalPhone" value={formData.personalPhone} onChange={handleChange} placeholder="+880-XXX-XXXXXXX" />
+                  <Input label="Personal Phone" name="personalPhone" value={formData.personalPhone} onChange={handleChange} placeholder="+880 1XXXXXXXXX" />
                   <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0' }}>
                     <input type="checkbox" id="married" name="married" checked={formData.married} onChange={handleChange} />
                     <label htmlFor="married" style={{ fontSize: '13px' }}>Married</label>
@@ -350,7 +350,7 @@ const EmployeeWizard = () => {
                   <SelectField label="Designation" name="designationId" value={formData.designationId} options={designations} />
                   <SelectField label="Location" name="locationId" value={formData.locationId} options={lookups?.locations || []} />
                   <SelectField label="Shift" name="shiftId" value={formData.shiftId} options={lookups?.shifts || []} />
-                  <SelectField label="Reports To" name="reportToId" value={formData.reportToId} 
+                  <SelectField label="Reports To" name="reportToId" value={formData.reportToId}
                     options={employees.filter(e => String(e.id) !== String(id)).map(e => ({ id: e.id, name: `${e.name} (${e.employeeId || e.id})` }))} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '24px' }}>
                     <input type="checkbox" id="manager" name="manager" checked={formData.manager} onChange={handleChange} />
@@ -414,7 +414,7 @@ const EmployeeWizard = () => {
                   <Input label="Account Holder Name" name="accountHolderName" value={formData.accountHolderName} onChange={handleChange} />
                   <Input label="Account Number" name="accountNumber" value={formData.accountNumber} onChange={handleChange} />
                   <Input label="IFSC / Routing Code" name="ifscCode" value={formData.ifscCode} onChange={handleChange} />
-                  
+
                   <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-color)', margin: '8px 0', paddingTop: '12px' }}>
                     <h4 style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 12px' }}>Document URLs (optional — upload after creation)</h4>
                   </div>

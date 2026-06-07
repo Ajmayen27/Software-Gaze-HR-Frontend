@@ -11,24 +11,24 @@ import { useAuth } from '../../context/AuthContext';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  OPEN:               { label: 'Open',               color: '#0369A1', bg: '#F0F9FF', dot: '#0EA5E9' },
-  IN_PROGRESS:        { label: 'In Progress',         color: '#7C3AED', bg: '#F5F3FF', dot: '#8B5CF6' },
-  WAITING_FOR_CLIENT: { label: 'Waiting for Client',  color: '#B45309', bg: '#FFFBEB', dot: '#F59E0B' },
-  RESOLVED:           { label: 'Resolved',            color: '#15803D', bg: '#F0FDF4', dot: '#22C55E' },
-  CLOSED:             { label: 'Closed',              color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8' },
-  REOPENED:           { label: 'Reopened',            color: '#B91C1C', bg: '#FEF2F2', dot: '#EF4444' },
+  OPEN: { label: 'Open', color: '#0369A1', bg: '#F0F9FF', dot: '#0EA5E9' },
+  IN_PROGRESS: { label: 'In Progress', color: '#7C3AED', bg: '#F5F3FF', dot: '#8B5CF6' },
+  WAITING_FOR_CLIENT: { label: 'Waiting for Client', color: '#B45309', bg: '#FFFBEB', dot: '#F59E0B' },
+  RESOLVED: { label: 'Resolved', color: '#15803D', bg: '#F0FDF4', dot: '#22C55E' },
+  CLOSED: { label: 'Closed', color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8' },
+  REOPENED: { label: 'Reopened', color: '#B91C1C', bg: '#FEF2F2', dot: '#EF4444' },
 };
 
 const PRIORITY_CONFIG = {
-  LOW:      { label: 'Low',      color: '#64748B', bg: '#F1F5F9' },
-  MEDIUM:   { label: 'Medium',   color: '#B45309', bg: '#FFFBEB' },
-  HIGH:     { label: 'High',     color: '#C2410C', bg: '#FFF7ED' },
+  LOW: { label: 'Low', color: '#64748B', bg: '#F1F5F9' },
+  MEDIUM: { label: 'Medium', color: '#B45309', bg: '#FFFBEB' },
+  HIGH: { label: 'High', color: '#C2410C', bg: '#FFF7ED' },
   CRITICAL: { label: 'Critical', color: '#B91C1C', bg: '#FEF2F2' },
 };
 
 const CATEGORIES = ['GENERAL', 'BILLING', 'TECHNICAL', 'BUG', 'FEATURE_REQUEST', 'OTHER'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-const STATUSES   = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CLIENT', 'RESOLVED', 'CLOSED', 'REOPENED'];
+const STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CLIENT', 'RESOLVED', 'CLOSED', 'REOPENED'];
 
 const StatusBadge = ({ status }) => {
   const cfg = STATUS_CONFIG[status] || { label: status, color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8' };
@@ -179,10 +179,10 @@ const SupportTickets = () => {
 
   const filtered = search
     ? tickets.filter(t =>
-        t.title?.toLowerCase().includes(search.toLowerCase()) ||
-        t.ticketNumber?.toLowerCase().includes(search.toLowerCase()) ||
-        t.client?.name?.toLowerCase().includes(search.toLowerCase())
-      )
+      t.title?.toLowerCase().includes(search.toLowerCase()) ||
+      t.ticketNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      t.client?.name?.toLowerCase().includes(search.toLowerCase())
+    )
     : tickets;
 
   // Counts per status for tabs

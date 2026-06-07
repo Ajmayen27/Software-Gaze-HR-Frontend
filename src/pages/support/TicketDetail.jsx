@@ -15,18 +15,18 @@ import { axiosInstance } from '../../api/axiosInstance';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  OPEN:               { label: 'Open',              color: '#0369A1', bg: '#F0F9FF', dot: '#0EA5E9' },
-  IN_PROGRESS:        { label: 'In Progress',        color: '#7C3AED', bg: '#F5F3FF', dot: '#8B5CF6' },
+  OPEN: { label: 'Open', color: '#0369A1', bg: '#F0F9FF', dot: '#0EA5E9' },
+  IN_PROGRESS: { label: 'In Progress', color: '#7C3AED', bg: '#F5F3FF', dot: '#8B5CF6' },
   WAITING_FOR_CLIENT: { label: 'Waiting for Client', color: '#B45309', bg: '#FFFBEB', dot: '#F59E0B' },
-  RESOLVED:           { label: 'Resolved',           color: '#15803D', bg: '#F0FDF4', dot: '#22C55E' },
-  CLOSED:             { label: 'Closed',             color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8' },
-  REOPENED:           { label: 'Reopened',           color: '#B91C1C', bg: '#FEF2F2', dot: '#EF4444' },
+  RESOLVED: { label: 'Resolved', color: '#15803D', bg: '#F0FDF4', dot: '#22C55E' },
+  CLOSED: { label: 'Closed', color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8' },
+  REOPENED: { label: 'Reopened', color: '#B91C1C', bg: '#FEF2F2', dot: '#EF4444' },
 };
 
 const PRIORITY_CONFIG = {
-  LOW:      { color: '#64748B', bg: '#F1F5F9' },
-  MEDIUM:   { color: '#B45309', bg: '#FFFBEB' },
-  HIGH:     { color: '#C2410C', bg: '#FFF7ED' },
+  LOW: { color: '#64748B', bg: '#F1F5F9' },
+  MEDIUM: { color: '#B45309', bg: '#FFFBEB' },
+  HIGH: { color: '#C2410C', bg: '#FFF7ED' },
   CRITICAL: { color: '#B91C1C', bg: '#FEF2F2' },
 };
 
@@ -56,7 +56,7 @@ const formatTime = (dt) => {
 };
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
-const AssignModal = ({ onClose, onDone }) => {
+const AssignModal = ({ user, onClose, onDone }) => {
   const [form, setForm] = useState({ assignedToId: '', priority: 'MEDIUM' });
   const [saving, setSaving] = useState(false);
   const { id } = useParams();
@@ -75,6 +75,14 @@ const AssignModal = ({ onClose, onDone }) => {
     } finally { setSaving(false); }
   };
 
+  const handleAssignToMe = () => {
+    if (user && user.id) {
+      setForm(f => ({ ...f, assignedToId: String(user.id) }));
+    } else {
+      toast.error("User ID not found in session");
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" style={{ width: '100%', maxWidth: 400 }}>
@@ -84,7 +92,14 @@ const AssignModal = ({ onClose, onDone }) => {
         </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div className="input-group">
-            <label className="input-label">Assignee User ID</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <label className="input-label" style={{ margin: 0 }}>Assignee User ID</label>
+              {user && (
+                <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0 4px', fontSize: '12px', height: 'auto', color: 'var(--primary)', fontWeight: 600 }} onClick={handleAssignToMe}>
+                  Assign to Me
+                </button>
+              )}
+            </div>
             <input className="input-field" type="number" placeholder="Enter user ID (optional)"
               value={form.assignedToId} onChange={e => setForm(f => ({ ...f, assignedToId: e.target.value }))} />
           </div>
@@ -166,8 +181,8 @@ const AuthenticatedAttachment = ({ attachment, onClick }) => {
     let objUrl;
     const fetchBlob = async () => {
       try {
-        const absoluteUrl = attachment.downloadUrl.startsWith('http') 
-          ? attachment.downloadUrl 
+        const absoluteUrl = attachment.downloadUrl.startsWith('http')
+          ? attachment.downloadUrl
           : `http://localhost:8081${attachment.downloadUrl}`;
         const res = await axiosInstance.get(absoluteUrl, { responseType: 'blob' });
         // axiosInstance interceptor unwraps response.data, so res is the Blob
@@ -183,7 +198,7 @@ const AuthenticatedAttachment = ({ attachment, onClick }) => {
 
   return (
     <div onClick={() => { if (imgUrl) onClick(imgUrl); }} title="Click to view"
-       style={{ display: 'block', overflow: 'hidden', borderRadius: 4, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: imgUrl ? 'pointer' : 'default' }}>
+      style={{ display: 'block', overflow: 'hidden', borderRadius: 4, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: imgUrl ? 'pointer' : 'default' }}>
       {imgUrl ? (
         <img src={imgUrl} alt={attachment.fileName} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
       ) : (
@@ -199,10 +214,13 @@ const AuthenticatedAttachment = ({ attachment, onClick }) => {
 const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { role } = useAuth();
-  const isClient   = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
-  const isAdmin    = typeof role === 'string' && (role.toUpperCase().includes('ADMIN') || role.toUpperCase().includes('MANAGER'));
-  const bottomRef  = useRef(null);
+  const { role, user } = useAuth();
+  const isClient = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
+  const isAdmin = typeof role === 'string' && (role.toUpperCase().includes('ADMIN') || role.toUpperCase().includes('MANAGER'));
+  const isSupport = typeof role === 'string' && role.toUpperCase().includes('SUPPORT');
+  // Full ticket-handling permission: Admin, Manager, AND Support Staff
+  const canHandleSupportTicket = ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_SUPPORT_STAFF'].includes(role);
+  const bottomRef = useRef(null);
 
   const [ticket, setTicket] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -234,7 +252,7 @@ const TicketDetail = () => {
   // Establish WebSocket Connection
   useEffect(() => {
     if (!id) return;
-    
+
     const token = sessionStorage.getItem('accessToken');
     const client = new Client({
       brokerURL: `ws://localhost:8081/api/v1/ws?token=${token}`,
@@ -282,7 +300,7 @@ const TicketDetail = () => {
         const formData = new FormData();
         files.forEach(file => formData.append('files', file));
         const uploadRes = await uploadMessageAttachments(id, formData);
-        
+
         // Handle unwrapped array or standard axios response gracefully
         let uploadedData = [];
         if (Array.isArray(uploadRes)) {
@@ -292,10 +310,10 @@ const TicketDetail = () => {
         } else if (Array.isArray(uploadRes?.data?.data)) {
           uploadedData = uploadRes.data.data;
         }
-        
+
         attachmentIds = uploadedData.map(att => att.id);
       }
-      
+
       const payload = {};
       if (msgText.trim()) payload.message = msgText.trim();
       if (attachmentIds.length > 0) payload.attachmentIds = attachmentIds;
@@ -319,7 +337,7 @@ const TicketDetail = () => {
   const handleAction = async (action) => {
     setActionLoading(action);
     try {
-      if (action === 'close')  await closeTicket(id);
+      if (action === 'close') await closeTicket(id);
       if (action === 'reopen') await reopenTicket(id);
       toast.success(`Ticket ${action === 'close' ? 'closed' : 'reopened'}`);
       fetchAll();
@@ -341,10 +359,10 @@ const TicketDetail = () => {
     </div>
   );
 
-  const canClose  = isClient && ['RESOLVED'].includes(ticket.status);
+  const canClose = isClient && ['RESOLVED'].includes(ticket.status);
   const canReopen = isClient && ['RESOLVED', 'CLOSED'].includes(ticket.status);
-  const canAssign = isAdmin  && ['OPEN', 'REOPENED'].includes(ticket.status);
-  const canResolve= isAdmin  && ['IN_PROGRESS', 'WAITING_FOR_CLIENT', 'REOPENED'].includes(ticket.status);
+  const canAssign = canHandleSupportTicket && ['OPEN', 'REOPENED'].includes(ticket.status);
+  const canResolve = canHandleSupportTicket && ['IN_PROGRESS', 'WAITING_FOR_CLIENT', 'REOPENED'].includes(ticket.status);
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -406,7 +424,7 @@ const TicketDetail = () => {
                 </div>
               ) : (
                 messages.map(msg => {
-                  const isAdminMsg = msg.senderRole === 'ROLE_ADMIN' || msg.senderRole === 'ROLE_MANAGER';
+                  const isAdminMsg = msg.senderRole === 'ROLE_ADMIN' || msg.senderRole === 'ROLE_MANAGER' || msg.senderRole === 'ROLE_SUPPORT_STAFF';
                   // Label: admin viewers see client name; client viewers see "You" for their own messages
                   const senderLabel = isAdminMsg
                     ? 'Support Team'
@@ -459,8 +477,9 @@ const TicketDetail = () => {
                         onChange={e => {
                           const newFiles = Array.from(e.target.files);
                           if (files.length + newFiles.length > 3) { toast.error('Max 3 pictures allowed'); return; }
-                          const valid = newFiles.filter(f => f.size <= 5 * 1024 * 1024);
-                          if (valid.length < newFiles.length) toast.error('Some files exceed 5MB limit');
+                          const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                          const valid = newFiles.filter(f => f.size <= 5 * 1024 * 1024 && allowedTypes.includes(f.type));
+                          if (valid.length < newFiles.length) toast.error('Only JPEG, PNG, WEBP files under 5MB are allowed');
                           setFiles(prev => [...prev, ...valid].slice(0, 3));
                           e.target.value = '';
                         }} />
@@ -478,7 +497,7 @@ const TicketDetail = () => {
                       {sending ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <Send size={16} />}
                     </button>
                   </div>
-                  
+
                   {files.length > 0 && (
                     <div style={{ display: 'flex', gap: 8, paddingLeft: 46 }}>
                       {files.map((file, i) => (
@@ -554,14 +573,14 @@ const TicketDetail = () => {
       </div>
 
       {/* Modals */}
-      {modal === 'assign' && <AssignModal onClose={() => setModal(null)} onDone={() => { setModal(null); fetchAll(); }} />}
+      {modal === 'assign' && <AssignModal user={user} onClose={() => setModal(null)} onDone={() => { setModal(null); fetchAll(); }} />}
       {modal === 'resolve' && <ResolveModal onClose={() => setModal(null)} onDone={() => { setModal(null); fetchAll(); }} />}
-      
+
       {/* Lightbox */}
       {lightboxImg && (
         <div className="modal-overlay" onClick={() => setLightboxImg(null)} style={{ zIndex: 9999, padding: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)' }}>
-          <button onClick={() => setLightboxImg(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s' }} 
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'} 
+          <button onClick={() => setLightboxImg(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
             onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}>
             <X size={24} />
           </button>

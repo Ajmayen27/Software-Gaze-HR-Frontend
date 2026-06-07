@@ -55,7 +55,7 @@ const MyProfile = () => {
       } catch { }
     });
     return () => { Object.values(images).forEach(url => { if (url) URL.revokeObjectURL(url); }); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employee]);
 
   const handleUpdateProfile = async () => {

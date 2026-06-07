@@ -22,13 +22,13 @@ const PayrollRunDetail = () => {
       try {
         const runData = await PayrollService.getPayrollRun(id);
         const payslipsData = await PayrollService.getPayrollRunPayslips(id);
-        
+
         // Unwrap data if nested
         const runObj = runData?.data || runData;
         const payslipList = Array.isArray(payslipsData) ? payslipsData : (payslipsData?.data || []);
-        
+
         if (!runObj) throw new Error("Payroll run not found");
-        
+
         setRun(runObj);
         setPayslips(payslipList);
       } catch (err) {

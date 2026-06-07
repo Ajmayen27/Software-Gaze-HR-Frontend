@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { axiosInstance } from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Building2, Wallet, Plus, Play, CircleDollarSign, TrendingUp, ArrowRight, Briefcase, Ticket, AlertCircle } from 'lucide-react';
+import { Users, UserCheck, Building2, Wallet, Plus, Play, CircleDollarSign, TrendingUp, ArrowRight, Briefcase, Ticket, AlertCircle, UserPlus } from 'lucide-react';
 import Button from '../components/ui/Button';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -20,7 +20,7 @@ const Dashboard = () => {
     totalTickets: 0,
     openTickets: 0
   });
-  
+
   const [departmentData, setDepartmentData] = useState([]);
   const [ticketStatusData, setTicketStatusData] = useState([]);
   const [clientStatusData, setClientStatusData] = useState([]);
@@ -54,10 +54,10 @@ const Dashboard = () => {
             totalEmployees = page.length;
           }
         }
-        
+
         // Process Departments
         const deptList = Array.isArray(deptRes) ? deptRes : [];
-        
+
         // Process Salary Groups
         const sgList = Array.isArray(sgRes) ? sgRes : [];
 
@@ -138,20 +138,20 @@ const Dashboard = () => {
           const prPage = Array.isArray(payrollRes) ? payrollRes : (payrollRes.content || payrollRes.data || []);
           if (Array.isArray(prPage)) payrollRuns = prPage;
         }
-        
+
         // Aggregate Payroll Expenses Data
         const expenseMap = {};
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         payrollRuns.forEach(run => {
-           if (run.status === 'APPROVED' || run.status === 'PROCESSED') {
-              const monthLabel = `${monthNames[run.month - 1]} ${run.year}`;
-              expenseMap[monthLabel] = (expenseMap[monthLabel] || 0) + (run.totalCtc || run.totalGross || 0);
-           }
+          if (run.status === 'APPROVED' || run.status === 'PROCESSED') {
+            const monthLabel = `${monthNames[run.month - 1]} ${run.year}`;
+            expenseMap[monthLabel] = (expenseMap[monthLabel] || 0) + (run.totalCtc || run.totalGross || 0);
+          }
         });
-        
+
         let payrollChartData = Object.keys(expenseMap).map(key => ({
-            name: key,
-            expense: expenseMap[key]
+          name: key,
+          expense: expenseMap[key]
         }));
 
         // Fallback to demo data if empty
@@ -169,7 +169,7 @@ const Dashboard = () => {
         setTicketStatusData(ticketChartData);
         setClientStatusData(clientChartData);
         setPayrollData(payrollChartData);
-        
+
         setRecentEmployees(employees.slice(0, 5));
         setRecentTickets(tickets.slice(0, 5));
       } catch (err) {
@@ -225,7 +225,7 @@ const Dashboard = () => {
 
       {/* Charts Section */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
-        
+
         {/* Employee Department Distribution */}
         <div className="card" style={{ padding: '20px' }}>
           <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)' }}>Employees by Department</h3>
@@ -300,7 +300,7 @@ const Dashboard = () => {
               <div style={{ color: 'var(--text-muted)' }}>No client data available</div>
             )}
           </div>
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
             {clientStatusData.map((entry, index) => (
               <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
                 <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: CLIENT_COLORS[entry.name] || COLORS[index % COLORS.length] }} />
@@ -317,25 +317,25 @@ const Dashboard = () => {
         <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)' }}>Company Monthly Expenses (Payroll)</h3>
         <div style={{ height: '300px', width: '100%' }}>
           {loading ? (
-             <div className="spinner" style={{ margin: '100px auto' }} />
+            <div className="spinner" style={{ margin: '100px auto' }} />
           ) : payrollData.length > 0 ? (
-             <ResponsiveContainer width="100%" height="100%">
-               <AreaChart data={payrollData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                 <defs>
-                   <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                   </linearGradient>
-                 </defs>
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
-                 <RechartsTooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} formatter={(value) => [`৳${value.toLocaleString()}`, 'Total Expense']} />
-                 <Area type="monotone" dataKey="expense" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
-               </AreaChart>
-             </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={payrollData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
+                <RechartsTooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} formatter={(value) => [`৳${value.toLocaleString()}`, 'Total Expense']} />
+                <Area type="monotone" dataKey="expense" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
+              </AreaChart>
+            </ResponsiveContainer>
           ) : (
-             <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No expense data available</div>
+            <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No expense data available</div>
           )}
         </div>
       </div>
@@ -344,6 +344,7 @@ const Dashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
         {[
           { label: 'Add Employee', desc: 'Onboard a new team member', icon: Users, path: '/employees/new', color: '#3b82f6' },
+          { label: 'Register Support', desc: 'Create support staff account', icon: UserPlus, path: '/support-staff/register', color: '#7c3aed' },
           { label: 'View Clients', desc: 'Manage your client base', icon: Briefcase, path: '/clients', color: '#8b5cf6' },
           { label: 'Support Tickets', desc: 'Resolve client issues', icon: AlertCircle, path: '/support-tickets', color: '#f59e0b' },
           { label: 'Run Payroll', desc: 'Process monthly salaries', icon: Wallet, path: '/payroll/runs', color: '#10b981' },
@@ -365,7 +366,7 @@ const Dashboard = () => {
 
       {/* Data Tables Section */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', gridAutoRows: 'min-content' }}>
-        
+
         {/* Recent Employees */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -441,9 +442,9 @@ const Dashboard = () => {
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ticket.clientName || ticket.clientId || 'Unknown Client'}</div>
                     </td>
                     <td>
-                       <span style={{ fontSize: '12px', color: ticket.priority === 'HIGH' ? '#ef4444' : ticket.priority === 'MEDIUM' ? '#f59e0b' : '#10b981' }}>
-                         {ticket.priority}
-                       </span>
+                      <span style={{ fontSize: '12px', color: ticket.priority === 'HIGH' ? '#ef4444' : ticket.priority === 'MEDIUM' ? '#f59e0b' : '#10b981' }}>
+                        {ticket.priority}
+                      </span>
                     </td>
                     <td><span className={`badge`} style={{ backgroundColor: `${TICKET_COLORS[ticket.status] || '#6b7280'}20`, color: TICKET_COLORS[ticket.status] || '#6b7280' }}>{ticket.status?.replace('_', ' ')}</span></td>
                   </tr>

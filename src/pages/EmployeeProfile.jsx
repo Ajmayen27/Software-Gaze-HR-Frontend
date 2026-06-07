@@ -12,7 +12,7 @@ const EmployeeProfile = () => {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  
+
   const [images, setImages] = useState({ profile_image: null, driving_license: null, pan_card: null, voter_id: null });
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const EmployeeProfile = () => {
       } catch { }
     });
     return () => { Object.values(images).forEach(url => { if (url) URL.revokeObjectURL(url); }); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employee]);
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>;

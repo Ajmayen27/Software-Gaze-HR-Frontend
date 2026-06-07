@@ -24,7 +24,7 @@ export const uploadMessageAttachments = (id, formData) =>
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 
-// ── Workflow Actions (Admin/Manager) ─────────────────────────────────────────
+// ── Workflow Actions (Admin, Manager, Support Staff) ─────────────────────────
 
 export const assignTicket = (id, data) =>
   axiosInstance.patch(`/support-tickets/${id}/assign`, data);
@@ -39,3 +39,8 @@ export const closeTicket = (id) =>
 
 export const reopenTicket = (id) =>
   axiosInstance.patch(`/support-tickets/${id}/reopen`);
+
+// ── Admin: Support Staff List ──────────────────────────────────────────────────
+
+export const getSupportStaffList = () =>
+  axiosInstance.get('/auth/support-staff');

@@ -5,25 +5,27 @@ import NotificationBell from '../components/NotificationBell';
 import {
   LayoutDashboard, Users, Wallet, Building2,
   User, Settings, LogOut, ChevronDown,
-  Briefcase, Headset, Building
+  Briefcase, Headset, Building, UserPlus
 } from 'lucide-react';
 
 const DashboardLayout = () => {
   const { isAuthenticated, loading, logout, role } = useAuth();
   const location = useLocation();
   const isEmployee = typeof role === 'string' && role.toUpperCase().includes('EMPLOYEE');
-  const isClient   = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
+  const isClient = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
+  const isSupport = typeof role === 'string' && role.toUpperCase().includes('SUPPORT');
+  const isAdminOrManager = typeof role === 'string' && (role.toUpperCase().includes('ADMIN') || role.toUpperCase().includes('MANAGER'));
   const [openMenus, setOpenMenus] = useState({ payroll: false, organization: false });
 
   if (loading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  const isActive      = (path)  => location.pathname === path || location.pathname.startsWith(path + '/');
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
   const isGroupActive = (paths) => paths.some(p => location.pathname.startsWith(p));
-  const toggleMenu    = (menu)  => setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
+  const toggleMenu = (menu) => setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
 
   const payrollPaths = ['/payroll', '/salary-groups'];
-  const orgPaths     = ['/departments', '/designations', '/locations', '/shifts'];
+  const orgPaths = ['/departments', '/designations', '/locations', '/shifts'];
 
   // Auto-expand active groups
   if (isGroupActive(payrollPaths) && !openMenus.payroll) {
@@ -109,11 +111,10 @@ const DashboardLayout = () => {
         }}>
 
           {/* ── Admin / Manager ────────────────────────────────────────────────── */}
-          {!isEmployee && !isClient && (
+          {isAdminOrManager && (
             <>
               <NavItem to="/dashboard" icon={LayoutDashboard}>Dashboard</NavItem>
               <NavItem to="/employees" icon={Users}>Employees</NavItem>
-              <NavItem to="/clients"   icon={Building}>Clients</NavItem>
 
               <SectionLabel>Payroll</SectionLabel>
               <NavGroup icon={Wallet} label="Payroll" menuKey="payroll" paths={payrollPaths}>
@@ -132,11 +133,22 @@ const DashboardLayout = () => {
             </>
           )}
 
-          {/* ── Support — visible to Admin/Manager and Client ────────────────── */}
-          {!isEmployee && (
+          {/* ── Clients Link (Visible to Admin/Manager and Support Staff) ── */}
+          {(isAdminOrManager || isSupport) && (
+            <NavItem to="/clients" icon={Building}>Clients</NavItem>
+          )}
+
+          {/* ── Support (Visible to Support, Admin/Manager, Client) ── */}
+          {(isAdminOrManager || isSupport || isClient) && (
             <>
               <SectionLabel>Support</SectionLabel>
-              <NavItem to="/support-tickets" icon={Headset}>
+              {(isAdminOrManager || isSupport) && (
+                <NavItem to="/support/dashboard" icon={LayoutDashboard}>Support Dashboard</NavItem>
+              )}
+              {role === 'ROLE_ADMIN' && (
+                <NavItem to="/support-staff/register" icon={UserPlus}>Create Support Staff</NavItem>
+              )}
+              <NavItem to="/support/tickets" icon={Headset}>
                 {isClient ? 'My Tickets' : 'Support Tickets'}
               </NavItem>
             </>
@@ -148,9 +160,10 @@ const DashboardLayout = () => {
             paddingTop: '12px',
             borderTop: '1px solid var(--border-color)',
           }}>
-            {!isClient && <NavItem to="/my-profile"     icon={User}>My Profile</NavItem>}
-            {isClient  && <NavItem to="/client-profile" icon={User}>My Profile</NavItem>}
-            {!isEmployee && !isClient && (
+            {isEmployee && <NavItem to="/my-profile" icon={User}>My Profile</NavItem>}
+            {isClient && <NavItem to="/client-profile" icon={User}>My Profile</NavItem>}
+            {(isAdminOrManager || isSupport) && <NavItem to="/my-profile" icon={User}>My Profile</NavItem>}
+            {isAdminOrManager && (
               <NavItem to="/settings" icon={Settings}>Settings</NavItem>
             )}
           </div>
@@ -179,7 +192,7 @@ const DashboardLayout = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {!isEmployee && !isClient && <NotificationBell />}
-            
+
             {role && (
               <span className="badge badge-info">{role.replace('ROLE_', '')}</span>
             )}

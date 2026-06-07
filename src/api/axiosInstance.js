@@ -12,8 +12,9 @@ export const axiosInstance = axios.create({
 // Interceptor to attach access token
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Check if the endpoint is an auth endpoint
-    if (!config.url.startsWith('/auth/')) {
+    // Attach token for all requests, EXCEPT standard public auth endpoints
+    const isPublicAuth = config.url === '/auth/login' || config.url === '/auth/register' || config.url === '/auth/refresh-token';
+    if (!isPublicAuth) {
       const token = sessionStorage.getItem('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;

@@ -8,15 +8,22 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(null);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if we have an access token and refresh token on load
     const token = sessionStorage.getItem('accessToken') || localStorage.getItem('refreshToken');
     const storedRole = sessionStorage.getItem('userRole');
+    const storedUser = sessionStorage.getItem('user');
     if (token) {
       setIsAuthenticated(true);
       setRole(storedRole);
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) { }
+      }
     }
     setLoading(false);
   }, []);
@@ -45,13 +52,19 @@ export const AuthProvider = ({ children }) => {
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       if (userRole) sessionStorage.setItem('userRole', userRole);
 
+      const loggedInUser = data.user || { email, role: userRole };
+      sessionStorage.setItem('user', JSON.stringify(loggedInUser));
+
       setIsAuthenticated(true);
       setRole(userRole);
+      setUser(loggedInUser);
 
       // Navigate based on role
       if (typeof userRole === 'string') {
         const roleUpper = userRole.toUpperCase();
-        if (roleUpper.includes('EMPLOYEE')) {
+        if (roleUpper.includes('SUPPORT')) {
+          navigate('/support/tickets');
+        } else if (roleUpper.includes('EMPLOYEE')) {
           navigate('/my-profile');
         } else if (roleUpper.includes('CLIENT')) {
           navigate('/client-profile');
@@ -76,15 +89,17 @@ export const AuthProvider = ({ children }) => {
     } finally {
       sessionStorage.removeItem('accessToken');
       sessionStorage.removeItem('userRole');
+      sessionStorage.removeItem('user');
       localStorage.removeItem('refreshToken');
       setIsAuthenticated(false);
       setRole(null);
+      setUser(null);
       navigate('/login');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading, role }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading, role, user }}>
       {children}
     </AuthContext.Provider>
   );

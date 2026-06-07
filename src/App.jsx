@@ -18,6 +18,8 @@ import PayrollRunDetail from './pages/payroll/PayrollRunDetail';
 import PayslipDetail from './pages/payroll/PayslipDetail';
 import ClientList from './pages/clients/ClientList';
 import ClientProfile from './pages/clients/ClientProfile';
+import SupportDashboard from './pages/support/SupportDashboard';
+import RegisterSupportStaff from './pages/support/RegisterSupportStaff';
 import SupportTickets from './pages/support/SupportTickets';
 import TicketDetail from './pages/support/TicketDetail';
 import { useAuth } from './context/AuthContext';
@@ -35,21 +37,68 @@ const fetchDepartments = async () => {
 
 const RootRedirect = () => {
   const { role } = useAuth();
-  const isEmployee = typeof role === 'string' && role.toUpperCase().includes('EMPLOYEE');
-  const isClient   = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
-  if (isEmployee) return <Navigate to="/my-profile" replace />;
-  if (isClient)   return <Navigate to="/support-tickets" replace />;
+  if (!role) return <Navigate to="/login" replace />;
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+  if (roleUpper.includes('SUPPORT'))  return <Navigate to="/support/tickets" replace />;
+  if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+  if (roleUpper.includes('CLIENT'))   return <Navigate to="/support-tickets" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 
+// Guard for HR and Payroll operations (Admin, Manager only)
+const RequireHrPayroll = ({ children }) => {
+  const { role } = useAuth();
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+  const canAccess = roleUpper.includes('ADMIN') || roleUpper.includes('MANAGER');
+  
+  if (!canAccess) {
+    if (roleUpper.includes('SUPPORT'))  return <Navigate to="/support/tickets" replace />;
+    if (roleUpper.includes('CLIENT'))   return <Navigate to="/support-tickets" replace />;
+    if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+// Guard for Client Management (Admin, Support Staff only)
+const RequireClientManagement = ({ children }) => {
+  const { role } = useAuth();
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+  const canAccess = roleUpper.includes('ADMIN') || roleUpper.includes('SUPPORT');
+  
+  if (!canAccess) {
+    if (roleUpper.includes('CLIENT'))   return <Navigate to="/support-tickets" replace />;
+    if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+// Guard for Support Tickets Area (Admin, Manager, Support Staff, Client)
+const RequireSupportStaffArea = ({ children }) => {
+  const { role } = useAuth();
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+  const canAccess = roleUpper.includes('ADMIN') || roleUpper.includes('MANAGER') || roleUpper.includes('SUPPORT') || roleUpper.includes('CLIENT');
+  
+  if (!canAccess) {
+    if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+// Guard for Admin Only operations
 const RequireAdmin = ({ children }) => {
   const { role } = useAuth();
-  const isEmployee = typeof role === 'string' && role.toUpperCase().includes('EMPLOYEE');
-  const isClient   = typeof role === 'string' && role.toUpperCase().includes('CLIENT');
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+  const canAccess = roleUpper === 'ROLE_ADMIN';
   
-  if (isEmployee) return <Navigate to="/my-profile" replace />;
-  if (isClient)   return <Navigate to="/client-profile" replace />;
-  
+  if (!canAccess) {
+    if (roleUpper.includes('SUPPORT'))  return <Navigate to="/support/tickets" replace />;
+    if (roleUpper.includes('CLIENT'))   return <Navigate to="/support-tickets" replace />;
+    if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 };
 
@@ -78,33 +127,33 @@ const App = () => {
         {/* Dashboard */}
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<RootRedirect />} />
-          <Route path="/dashboard" element={<RequireAdmin><Dashboard /></RequireAdmin>} />
+          <Route path="/dashboard" element={<RequireHrPayroll><Dashboard /></RequireHrPayroll>} />
 
           {/* Employees */}
-          <Route path="/employees" element={<RequireAdmin><EmployeeList /></RequireAdmin>} />
-          <Route path="/employees/new" element={<RequireAdmin><EmployeeWizard /></RequireAdmin>} />
-          <Route path="/employees/:id/profile" element={<RequireAdmin><EmployeeProfile /></RequireAdmin>} />
-          <Route path="/employees/:id/edit" element={<RequireAdmin><EmployeeWizard /></RequireAdmin>} />
-          <Route path="/employees/:id/documents" element={<RequireAdmin><DocumentUpload /></RequireAdmin>} />
+          <Route path="/employees" element={<RequireHrPayroll><EmployeeList /></RequireHrPayroll>} />
+          <Route path="/employees/new" element={<RequireHrPayroll><EmployeeWizard /></RequireHrPayroll>} />
+          <Route path="/employees/:id/profile" element={<RequireHrPayroll><EmployeeProfile /></RequireHrPayroll>} />
+          <Route path="/employees/:id/edit" element={<RequireHrPayroll><EmployeeWizard /></RequireHrPayroll>} />
+          <Route path="/employees/:id/documents" element={<RequireHrPayroll><DocumentUpload /></RequireHrPayroll>} />
 
           {/* Payroll */}
-          <Route path="/payroll/runs" element={<RequireAdmin><PayrollRuns /></RequireAdmin>} />
-          <Route path="/payroll/runs/:id" element={<RequireAdmin><PayrollRunDetail /></RequireAdmin>} />
-          <Route path="/payroll/components" element={<RequireAdmin><SalaryComponents /></RequireAdmin>} />
-          <Route path="/payroll/payslip/:id" element={<RequireAdmin><PayslipDetail /></RequireAdmin>} />
+          <Route path="/payroll/runs" element={<RequireHrPayroll><PayrollRuns /></RequireHrPayroll>} />
+          <Route path="/payroll/runs/:id" element={<RequireHrPayroll><PayrollRunDetail /></RequireHrPayroll>} />
+          <Route path="/payroll/components" element={<RequireHrPayroll><SalaryComponents /></RequireHrPayroll>} />
+          <Route path="/payroll/payslip/:id" element={<RequireHrPayroll><PayslipDetail /></RequireHrPayroll>} />
 
           {/* Organization Lookups */}
           <Route path="/departments" element={
-            <RequireAdmin>
+            <RequireHrPayroll>
               <LookupPage title="Departments" subtitle="Manage organizational departments." endpoint="/departments"
                 fields={[
                   { key: 'name', label: 'Name', required: true },
                   { key: 'description', label: 'Description' }
                 ]} />
-            </RequireAdmin>
+            </RequireHrPayroll>
           } />
           <Route path="/designations" element={
-            <RequireAdmin>
+            <RequireHrPayroll>
               <LookupPage title="Designations" subtitle="Manage job designations and titles." endpoint="/designations"
                 fields={[
                   { key: 'name', label: 'Name', required: true },
@@ -112,10 +161,10 @@ const App = () => {
                   { key: 'departmentId', label: 'Department', required: true }
                 ]}
                 extraFetch={fetchDepartments} />
-            </RequireAdmin>
+            </RequireHrPayroll>
           } />
           <Route path="/locations" element={
-            <RequireAdmin>
+            <RequireHrPayroll>
               <LookupPage title="Locations" subtitle="Manage office locations." endpoint="/locations"
                 fields={[
                   { key: 'name', label: 'Name', required: true },
@@ -123,10 +172,10 @@ const App = () => {
                   { key: 'city', label: 'City' },
                   { key: 'country', label: 'Country' }
                 ]} />
-            </RequireAdmin>
+            </RequireHrPayroll>
           } />
           <Route path="/shifts" element={
-            <RequireAdmin>
+            <RequireHrPayroll>
               <LookupPage title="Shifts" subtitle="Manage work shifts and schedules." endpoint="/shifts"
                 fields={[
                   { key: 'name', label: 'Name', required: true },
@@ -134,32 +183,42 @@ const App = () => {
                   { key: 'endTime', label: 'End Time', type: 'time', required: true },
                   { key: 'description', label: 'Description' }
                 ]} />
-            </RequireAdmin>
+            </RequireHrPayroll>
           } />
           <Route path="/salary-groups" element={
-            <RequireAdmin>
+            <RequireHrPayroll>
               <LookupPage title="Salary Groups" subtitle="Define salary structures and basic salary percentages." endpoint="/salary-groups"
                 fields={[
                   { key: 'name', label: 'Name', required: true },
                   { key: 'description', label: 'Description' },
                   { key: 'basicSalaryPercentage', label: 'Basic Salary %', type: 'number', required: true }
                 ]} />
-            </RequireAdmin>
+            </RequireHrPayroll>
           } />
 
-          {/* Clients (Admin) */}
-          <Route path="/clients" element={<RequireAdmin><ClientList /></RequireAdmin>} />
+          {/* Clients (Admin and Support Staff) */}
+          <Route path="/clients" element={<RequireClientManagement><ClientList /></RequireClientManagement>} />
 
           {/* Client Self-Service */}
           <Route path="/client-profile" element={<ClientProfile />} />
 
-          {/* Support Tickets - Visible to Admin and Client */}
-          <Route path="/support-tickets" element={<SupportTickets />} />
-          <Route path="/support-tickets/:id" element={<TicketDetail />} />
+          {/* Support Dashboard */}
+          <Route path="/support/dashboard" element={<RequireSupportStaffArea><SupportDashboard /></RequireSupportStaffArea>} />
+
+          {/* Register Support Staff (Admin only) */}
+          <Route path="/support-staff/register" element={<RequireAdmin><RegisterSupportStaff /></RequireAdmin>} />
+
+          {/* Support Tickets */}
+          <Route path="/support/tickets" element={<RequireSupportStaffArea><SupportTickets /></RequireSupportStaffArea>} />
+          <Route path="/support/tickets/:id" element={<RequireSupportStaffArea><TicketDetail /></RequireSupportStaffArea>} />
+
+          {/* Support Tickets - Deprecated URL mapping for backward compatibility */}
+          <Route path="/support-tickets" element={<RequireSupportStaffArea><SupportTickets /></RequireSupportStaffArea>} />
+          <Route path="/support-tickets/:id" element={<RequireSupportStaffArea><TicketDetail /></RequireSupportStaffArea>} />
 
           {/* Profile & Settings */}
           <Route path="/my-profile" element={<MyProfile />} />
-          <Route path="/settings" element={<RequireAdmin><Settings /></RequireAdmin>} />
+          <Route path="/settings" element={<RequireHrPayroll><Settings /></RequireHrPayroll>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
