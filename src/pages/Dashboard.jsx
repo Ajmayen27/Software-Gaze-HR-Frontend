@@ -423,15 +423,14 @@ const Dashboard = () => {
             <thead>
               <tr>
                 <th>Subject</th>
-                <th>Priority</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
+                <tr><td colSpan="2" style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
               ) : recentTickets.length === 0 ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No recent tickets.</td></tr>
+                <tr><td colSpan="2" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No recent tickets.</td></tr>
               ) : (
                 recentTickets.map(ticket => (
                   <tr key={ticket.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/support-tickets/${ticket.id}`)}>
@@ -440,11 +439,6 @@ const Dashboard = () => {
                         {ticket.subject}
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ticket.clientName || ticket.clientId || 'Unknown Client'}</div>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '12px', color: ticket.priority === 'HIGH' ? '#ef4444' : ticket.priority === 'MEDIUM' ? '#f59e0b' : '#10b981' }}>
-                        {ticket.priority}
-                      </span>
                     </td>
                     <td><span className={`badge`} style={{ backgroundColor: `${TICKET_COLORS[ticket.status] || '#6b7280'}20`, color: TICKET_COLORS[ticket.status] || '#6b7280' }}>{ticket.status?.replace('_', ' ')}</span></td>
                   </tr>

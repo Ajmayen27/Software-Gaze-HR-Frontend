@@ -5,7 +5,7 @@ import NotificationBell from '../components/NotificationBell';
 import {
   LayoutDashboard, Users, Wallet, Building2,
   User, Settings, LogOut, ChevronDown,
-  Briefcase, Headset, Building, UserPlus
+  Briefcase, Headset, Building, UserPlus, Receipt
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -122,6 +122,9 @@ const DashboardLayout = () => {
                 <NavSubItem to="/payroll/components">Salary Components</NavSubItem>
                 <NavSubItem to="/salary-groups">Salary Groups</NavSubItem>
               </NavGroup>
+
+              <SectionLabel>Finances</SectionLabel>
+              <NavItem to="/expenses" icon={Receipt}>Expenses</NavItem>
 
               <SectionLabel>Organization</SectionLabel>
               <NavGroup icon={Building2} label="Organization" menuKey="organization" paths={orgPaths}>

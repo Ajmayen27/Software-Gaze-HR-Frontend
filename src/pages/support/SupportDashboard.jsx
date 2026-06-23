@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Headset, Users, AlertCircle, CheckCircle2, Inbox, TrendingUp, Shield, BarChart2, Plus, ArrowRight, Building } from 'lucide-react';
+import { Headset, Users, AlertCircle, CheckCircle2, Inbox, TrendingUp, BarChart2, Plus, ArrowRight, Building } from 'lucide-react';
 import { getAllTickets } from '../../api/support';
 import { getAllClients } from '../../api/clients';
 import Button from '../../components/ui/Button';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
 import toast from 'react-hot-toast';
@@ -21,7 +21,6 @@ const SupportDashboard = () => {
   });
 
   const [ticketStatusData, setTicketStatusData] = useState([]);
-  const [ticketPriorityData, setTicketPriorityData] = useState([]);
   const [recentTickets, setRecentTickets] = useState([]);
   const [recentClients, setRecentClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,20 +65,7 @@ const SupportDashboard = () => {
           }))
           .filter(item => item.value > 0);
 
-        // Recharts: Ticket Priority Count
-        const priorityCounts = { 'LOW': 0, 'MEDIUM': 0, 'HIGH': 0, 'CRITICAL': 0 };
-        tickets.forEach(t => {
-          if (t.priority && priorityCounts[t.priority] !== undefined) {
-            priorityCounts[t.priority]++;
-          }
-        });
-        const priorityChartData = Object.keys(priorityCounts).map(p => ({
-          name: p,
-          count: priorityCounts[p]
-        }));
-
         setTicketStatusData(statusChartData);
-        setTicketPriorityData(priorityChartData);
         setRecentTickets(tickets.slice(0, 5));
         setRecentClients(clients.slice(0, 5));
       } catch (err) {
@@ -181,29 +167,7 @@ const SupportDashboard = () => {
           </div>
         </div>
 
-        {/* Ticket Priority Distribution */}
-        <div className="card" style={{ padding: '20px' }}>
-          <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Shield size={16} color="var(--primary)" /> Tickets by Priority
-          </h3>
-          <div style={{ height: '260px', width: '100%' }}>
-            {loading ? (
-              <div className="spinner" style={{ margin: '100px auto' }} />
-            ) : ticketPriorityData.some(p => p.count > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ticketPriorityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} allowDecimals={false} />
-                  <RechartsTooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
-                  <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available</div>
-            )}
-          </div>
-        </div>
+
       </div>
 
       {/* Lists Section */}
@@ -220,15 +184,14 @@ const SupportDashboard = () => {
             <thead>
               <tr>
                 <th>Ticket</th>
-                <th>Priority</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
+                <tr><td colSpan="2" style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
               ) : recentTickets.length === 0 ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No tickets found.</td></tr>
+                <tr><td colSpan="2" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No tickets found.</td></tr>
               ) : (
                 recentTickets.map(t => (
                   <tr key={t.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/support/tickets/${t.id}`)}>
@@ -237,11 +200,6 @@ const SupportDashboard = () => {
                         <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '13px' }}>{t.title}</div>
                         <span style={{ fontSize: '11px', color: 'var(--primary)' }}>{t.ticketNumber}</span>
                       </div>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: t.priority === 'CRITICAL' || t.priority === 'HIGH' ? 'var(--danger)' : 'var(--text-muted)' }}>
-                        {t.priority}
-                      </span>
                     </td>
                     <td>
                       <span className="badge" style={{ backgroundColor: `${STATUS_COLORS[t.status.replaceAll('_', ' ')] || '#6b7280'}15`, color: STATUS_COLORS[t.status.replaceAll('_', ' ')] || '#6b7280' }}>

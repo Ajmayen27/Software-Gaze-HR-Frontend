@@ -6,10 +6,16 @@ import { motion } from 'framer-motion';
 import logo from '../assets/Logo_SG-removebg-preview.png';
 
 const AuthLayout = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, role } = useAuth();
 
   if (loading) return null;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) {
+    const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+    if (roleUpper.includes('SUPPORT'))  return <Navigate to="/support/tickets" replace />;
+    if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+    if (roleUpper.includes('CLIENT'))   return <Navigate to="/support-tickets" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="auth-layout-container">

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Headset, Plus, Search, Filter, ChevronLeft, ChevronRight,
-  Clock, AlertTriangle, CheckCircle2, XCircle, RotateCcw,
+  Clock, CheckCircle2, XCircle, RotateCcw,
   Loader2, Tag, X, Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -19,15 +19,7 @@ const STATUS_CONFIG = {
   REOPENED: { label: 'Reopened', color: '#B91C1C', bg: '#FEF2F2', dot: '#EF4444' },
 };
 
-const PRIORITY_CONFIG = {
-  LOW: { label: 'Low', color: '#64748B', bg: '#F1F5F9' },
-  MEDIUM: { label: 'Medium', color: '#B45309', bg: '#FFFBEB' },
-  HIGH: { label: 'High', color: '#C2410C', bg: '#FFF7ED' },
-  CRITICAL: { label: 'Critical', color: '#B91C1C', bg: '#FEF2F2' },
-};
-
 const CATEGORIES = ['GENERAL', 'BILLING', 'TECHNICAL', 'BUG', 'FEATURE_REQUEST', 'OTHER'];
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CLIENT', 'RESOLVED', 'CLOSED', 'REOPENED'];
 
 const StatusBadge = ({ status }) => {
@@ -36,16 +28,6 @@ const StatusBadge = ({ status }) => {
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color, letterSpacing: '0.3px' }}>
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
       {cfg.label}
-    </span>
-  );
-};
-
-const PriorityBadge = ({ priority }) => {
-  if (!priority) return null;
-  const cfg = PRIORITY_CONFIG[priority] || { label: priority, color: '#64748B', bg: '#F1F5F9' };
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: cfg.bg, color: cfg.color }}>
-      <AlertTriangle size={10} /> {cfg.label}
     </span>
   );
 };
@@ -116,21 +98,12 @@ const CreateTicketModal = ({ onClose, onCreated }) => {
               style={{ resize: 'vertical' }} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="input-group">
-              <label className="input-label">Category <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <select className={`input-field ${errors.category ? 'input-error' : ''}`} value={form.category}
-                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c.replace('_', ' ')}</option>)}
-              </select>
-            </div>
-            <div className="input-group">
-              <label className="input-label">Priority</label>
-              <select className="input-field" value={form.priority}
-                onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
-                {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
+          <div className="input-group">
+            <label className="input-label">Category <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <select className={`input-field ${errors.category ? 'input-error' : ''}`} value={form.category}
+              onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c.replace('_', ' ')}</option>)}
+            </select>
           </div>
 
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
@@ -212,33 +185,35 @@ const SupportTickets = () => {
       </div>
 
       {/* Status Tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-        <button
-          className={`btn btn-sm ${statusFilter === '' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => { setStatusFilter(''); setPage(0); }}
-        >
-          All <span style={{ opacity: 0.7, marginLeft: 4 }}>{meta.totalElements}</span>
-        </button>
-        {STATUSES.map(s => {
-          const cfg = STATUS_CONFIG[s];
-          return (
-            <button
-              key={s}
-              onClick={() => { setStatusFilter(s); setPage(0); }}
-              style={{
-                padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', border: '1px solid',
-                background: statusFilter === s ? cfg.bg : 'var(--bg-card)',
-                color: statusFilter === s ? cfg.color : 'var(--text-secondary)',
-                borderColor: statusFilter === s ? cfg.dot : 'var(--border-color)',
-                transition: 'all 0.15s'
-              }}
-            >
-              {cfg.label}
-            </button>
-          );
-        })}
-      </div>
+      {!isClient && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+          <button
+            className={`btn btn-sm ${statusFilter === '' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => { setStatusFilter(''); setPage(0); }}
+          >
+            All <span style={{ opacity: 0.7, marginLeft: 4 }}>{meta.totalElements}</span>
+          </button>
+          {STATUSES.map(s => {
+            const cfg = STATUS_CONFIG[s];
+            return (
+              <button
+                key={s}
+                onClick={() => { setStatusFilter(s); setPage(0); }}
+                style={{
+                  padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', border: '1px solid',
+                  background: statusFilter === s ? cfg.bg : 'var(--bg-card)',
+                  color: statusFilter === s ? cfg.color : 'var(--text-secondary)',
+                  borderColor: statusFilter === s ? cfg.dot : 'var(--border-color)',
+                  transition: 'all 0.15s'
+                }}
+              >
+                {cfg.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Search */}
       <div className="card" style={{ padding: '14px 16px', marginBottom: 16 }}>
@@ -275,8 +250,7 @@ const SupportTickets = () => {
                 <th>Ticket</th>
                 {!isClient && <th>Client</th>}
                 <th>Category</th>
-                <th>Priority</th>
-                <th>Status</th>
+                {!isClient && <th>Status</th>}
                 <th>Assigned To</th>
                 <th>Created</th>
               </tr>
@@ -304,8 +278,7 @@ const SupportTickets = () => {
                       <Tag size={12} /> {t.category?.replace('_', ' ')}
                     </span>
                   </td>
-                  <td><PriorityBadge priority={t.priority} /></td>
-                  <td><StatusBadge status={t.status} /></td>
+                  {!isClient && <td><StatusBadge status={t.status} /></td>}
                   <td>
                     {t.assignedTo
                       ? <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t.assignedTo.email}</span>

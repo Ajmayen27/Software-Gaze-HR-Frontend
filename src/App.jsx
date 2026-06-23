@@ -22,6 +22,7 @@ import SupportDashboard from './pages/support/SupportDashboard';
 import RegisterSupportStaff from './pages/support/RegisterSupportStaff';
 import SupportTickets from './pages/support/SupportTickets';
 import TicketDetail from './pages/support/TicketDetail';
+import ExpensePage from './pages/expenses/ExpensePage';
 import { useAuth } from './context/AuthContext';
 import { axiosInstance } from './api/axiosInstance';
 import { Toaster } from 'react-hot-toast';
@@ -102,7 +103,31 @@ const RequireAdmin = ({ children }) => {
   return children;
 };
 
+// Guard for Support Dashboard (Admin, Manager, Support Staff only)
+const RequireSupportStaffDashboard = ({ children }) => {
+  const { role } = useAuth();
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
+  const canAccess = roleUpper.includes('ADMIN') || roleUpper.includes('MANAGER') || roleUpper.includes('SUPPORT');
+  
+  if (!canAccess) {
+    if (roleUpper.includes('CLIENT'))   return <Navigate to="/support-tickets" replace />;
+    if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 const App = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-body)' }}>
+        <div className="spinner" style={{ width: '40px', height: '40px' }} />
+      </div>
+    );
+  }
+
   return (
     <>
       <Toaster
@@ -135,6 +160,9 @@ const App = () => {
           <Route path="/employees/:id/profile" element={<RequireHrPayroll><EmployeeProfile /></RequireHrPayroll>} />
           <Route path="/employees/:id/edit" element={<RequireHrPayroll><EmployeeWizard /></RequireHrPayroll>} />
           <Route path="/employees/:id/documents" element={<RequireHrPayroll><DocumentUpload /></RequireHrPayroll>} />
+
+          {/* Expenses */}
+          <Route path="/expenses" element={<RequireHrPayroll><ExpensePage /></RequireHrPayroll>} />
 
           {/* Payroll */}
           <Route path="/payroll/runs" element={<RequireHrPayroll><PayrollRuns /></RequireHrPayroll>} />
@@ -203,7 +231,7 @@ const App = () => {
           <Route path="/client-profile" element={<ClientProfile />} />
 
           {/* Support Dashboard */}
-          <Route path="/support/dashboard" element={<RequireSupportStaffArea><SupportDashboard /></RequireSupportStaffArea>} />
+          <Route path="/support/dashboard" element={<RequireSupportStaffDashboard><SupportDashboard /></RequireSupportStaffDashboard>} />
 
           {/* Register Support Staff (Admin only) */}
           <Route path="/support-staff/register" element={<RequireAdmin><RegisterSupportStaff /></RequireAdmin>} />
