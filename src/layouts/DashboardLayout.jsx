@@ -173,14 +173,39 @@ const DashboardLayout = () => {
         </nav>
 
         {/* Logout */}
-        <div style={{ padding: '12px', borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ padding: '16px', borderTop: '1px solid var(--border-color)' }}>
           <button
-            className="btn btn-ghost"
-            style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--text-muted)', fontSize: '13px' }}
             onClick={logout}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              border: '1px solid transparent',
+              background: 'transparent',
+              color: 'var(--text-secondary)',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = 'var(--danger-light)';
+              e.currentTarget.style.color = 'var(--danger)';
+              e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.12)';
+              e.currentTarget.querySelector('svg').style.transform = 'translateX(-2px)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+              e.currentTarget.style.borderColor = 'transparent';
+              e.currentTarget.querySelector('svg').style.transform = 'none';
+            }}
           >
-            <LogOut size={16} />
-            Logout
+            <LogOut size={16} style={{ transition: 'transform 0.2s ease' }} />
+            <span style={{ fontWeight: 600 }}>Logout</span>
           </button>
         </div>
       </aside>
