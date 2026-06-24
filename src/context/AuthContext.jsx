@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { axiosInstance } from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -12,20 +13,77 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have an access token and refresh token on load
-    const token = sessionStorage.getItem('accessToken') || localStorage.getItem('refreshToken');
-    const storedRole = sessionStorage.getItem('userRole');
-    const storedUser = sessionStorage.getItem('user');
-    if (token) {
-      setIsAuthenticated(true);
-      setRole(storedRole);
-      if (storedUser) {
+    const initializeAuth = async () => {
+      const accessToken = sessionStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      const storedRole = sessionStorage.getItem('userRole');
+      const storedUser = sessionStorage.getItem('user');
+
+      if (accessToken && storedRole) {
+        setIsAuthenticated(true);
+        setRole(storedRole);
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (e) {}
+        }
+        setLoading(false);
+      } else if (refreshToken) {
+        // Access token is missing/expired (e.g. new window/tab), but refresh token is available in localStorage.
+        // Attempt to request a new access token to restore the user session.
         try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) { }
+          const res = await axios.post('http://localhost:8081/api/v1/auth/refresh-token', { refreshToken });
+          
+          // Unwrap response format from the API
+          const responseData = res.data;
+          const data = responseData && responseData.success !== undefined ? responseData.data : responseData;
+          
+          const newAccessToken = data?.accessToken;
+          const newRefreshToken = data?.refreshToken;
+
+          if (newAccessToken) {
+            sessionStorage.setItem('accessToken', newAccessToken);
+            if (newRefreshToken) {
+              localStorage.setItem('refreshToken', newRefreshToken);
+            }
+
+            let userRole = data?.role;
+            try {
+              const payload = JSON.parse(atob(newAccessToken.split('.')[1]));
+              userRole = payload.role || payload.roles || payload.authorities || userRole;
+              if (Array.isArray(userRole)) userRole = userRole[0];
+              if (typeof userRole === 'object' && userRole.authority) {
+                userRole = userRole.authority;
+              }
+            } catch (e) {}
+
+            if (userRole) {
+              sessionStorage.setItem('userRole', userRole);
+              setRole(userRole);
+              setIsAuthenticated(true);
+            }
+
+            const loggedInUser = data?.user || { role: userRole };
+            sessionStorage.setItem('user', JSON.stringify(loggedInUser));
+            setUser(loggedInUser);
+          } else {
+            // Failed to retrieve a new token
+            localStorage.removeItem('refreshToken');
+            sessionStorage.clear();
+          }
+        } catch (err) {
+          console.warn('Failed to restore session via refresh token:', err);
+          localStorage.removeItem('refreshToken');
+          sessionStorage.clear();
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email, password) => {

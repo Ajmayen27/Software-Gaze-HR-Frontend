@@ -18,7 +18,7 @@ const DashboardLayout = () => {
   const [openMenus, setOpenMenus] = useState({ payroll: false, organization: false });
 
   if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !role) return <Navigate to="/login" replace />;
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
   const isGroupActive = (paths) => paths.some(p => location.pathname.startsWith(p));

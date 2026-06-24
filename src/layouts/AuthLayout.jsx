@@ -9,7 +9,7 @@ const AuthLayout = () => {
   const { isAuthenticated, loading, role } = useAuth();
 
   if (loading) return null;
-  if (isAuthenticated) {
+  if (isAuthenticated && role) {
     const roleUpper = typeof role === 'string' ? role.toUpperCase() : '';
     if (roleUpper.includes('SUPPORT'))  return <Navigate to="/support/tickets" replace />;
     if (roleUpper.includes('EMPLOYEE')) return <Navigate to="/my-profile" replace />;
