@@ -22,6 +22,19 @@ const fmtDate = (dateStr) => {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+const DEFAULT_BILL_TYPES = [
+  'Electricity',
+  'Water Bill',
+  'Gas Bill',
+  'Internet Bill',
+  'House Rent',
+  'Office Rent',
+  'Office Supplies',
+  'Software Subscription',
+  'Travel Expense',
+  'Miscellaneous',
+];
+
 const EMPTY_FORM = {
   billType: '',
   amount: '',
@@ -307,7 +320,13 @@ const ExpenseModal = ({ mode, initial, onClose, onSaved }) => {
                 value={form.billType}
                 onChange={set('billType')}
                 id="expense-billType"
+                list="modal-bill-types"
               />
+              <datalist id="modal-bill-types">
+                {DEFAULT_BILL_TYPES.map(type => (
+                  <option key={type} value={type} />
+                ))}
+              </datalist>
             </div>
             <div className="input-group">
               <label className="input-label">Amount (BDT) *</label>
@@ -718,7 +737,18 @@ const ExportReportModal = ({ reportType, filters, onClose }) => {
             </div>
             <div className="input-group">
               <label className="input-label">Filter by Bill Type</label>
-              <input className="input-field" placeholder="e.g. Electricity" value={params.billType} onChange={set('billType')} />
+              <input
+                className="input-field"
+                placeholder="e.g. Electricity"
+                value={params.billType}
+                onChange={set('billType')}
+                list="export-bill-types"
+              />
+              <datalist id="export-bill-types">
+                {DEFAULT_BILL_TYPES.map(type => (
+                  <option key={type} value={type} />
+                ))}
+              </datalist>
             </div>
           </div>
 
@@ -795,15 +825,43 @@ const ExpensePage = () => {
     }
   }, [filters]);
 
+  // Compute summary by fetching ALL current-month expenses and summing tag-wise.
+  // Uses end-of-month as endDate so future-dated records within the month are included.
+  // Tag comparison is case-insensitive to handle any backend casing (Paid / PAID / paid).
   const loadSummary = useCallback(async () => {
     try {
-      const res = await ExpenseService.getCurrentMonthSummary();
-      // Log raw response so we can inspect the exact field names from the backend
-      console.log('[ExpensePage] Summary API response:', res);
-      setSummary(res);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth(); // 0-indexed
+      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      // Last day of the current month (not today) so future-dated records are included
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      // Fetch a large batch to cover all current-month records
+      const res = await ExpenseService.getExpenses({
+        startDate,
+        endDate,
+        page: 0,
+        size: 10000,
+        sortBy: 'date',
+        sortDir: 'desc',
+      });
+
+      const all = res?.content ?? (Array.isArray(res) ? res : []);
+
+      const calc = { totalAmount: 0, paidAmount: 0, unpaidAmount: 0, dueAmount: 0 };
+      for (const exp of all) {
+        const amt = Number(exp.amount) || 0;
+        calc.totalAmount += amt;
+        if (exp.tag === 'Paid')   calc.paidAmount   += amt;
+        if (exp.tag === 'Unpaid') calc.unpaidAmount += amt;
+        if (exp.tag === 'Due')    calc.dueAmount    += amt;
+      }
+
+      setSummary(calc);
     } catch (err) {
-      console.warn('[ExpensePage] Summary failed:', err);
-      // Silently ignore summary errors
+      console.warn('[ExpensePage] Summary calculation failed:', err);
     }
   }, []);
 
@@ -862,16 +920,9 @@ const ExpensePage = () => {
   // ── Pagination
   const goToPage = (p) => setFilters(prev => ({ ...prev, page: p }));
 
-  // ── Render summary values safely
-  // pickFirst resolves the first matching key that has a defined, non-null value.
-  // This avoids the || bug where a valid value of 0 is skipped.
-  const pickFirst = (...keys) => {
-    for (const key of keys) {
-      const v = summary?.[key];
-      if (v !== undefined && v !== null) return v;
-    }
-    return 0;
-  };
+  // summary now has a known, calculated shape:
+  // { totalAmount, paidAmount, unpaidAmount, dueAmount }
+  const getSummaryVal = (key) => summary?.[key] ?? 0;
 
   // ── Render
   return (
@@ -906,28 +957,28 @@ const ExpensePage = () => {
         <SummaryCard
           icon={DollarSign}
           label="Total This Month"
-          value={fmt(pickFirst('totalAmount', 'total', 'totalExpense', 'totalExpenses', 'amount'))}
+          value={fmt(getSummaryVal('totalAmount'))}
           iconBg="var(--primary-light)"
           iconColor="var(--primary)"
         />
         <SummaryCard
           icon={Receipt}
           label="Paid"
-          value={fmt(pickFirst('paidAmount', 'paid', 'totalPaid', 'paidTotal', 'PAID'))}
+          value={fmt(getSummaryVal('paidAmount'))}
           iconBg="var(--success-light)"
           iconColor="var(--success)"
         />
         <SummaryCard
           icon={Clock}
           label="Unpaid"
-          value={fmt(pickFirst('unpaidAmount', 'unpaid', 'totalUnpaid', 'unpaidTotal', 'UNPAID'))}
+          value={fmt(getSummaryVal('unpaidAmount'))}
           iconBg="var(--warning-light)"
           iconColor="var(--warning)"
         />
         <SummaryCard
           icon={AlertTriangle}
           label="Due"
-          value={fmt(pickFirst('dueAmount', 'due', 'totalDue', 'dueTotal', 'DUE'))}
+          value={fmt(getSummaryVal('dueAmount'))}
           iconBg="var(--danger-light)"
           iconColor="var(--danger)"
         />
@@ -985,7 +1036,13 @@ const ExpensePage = () => {
               onChange={e => setPendingFilters(p => ({ ...p, billType: e.target.value }))}
               id="filter-billType"
               onKeyDown={e => { if (e.key === 'Enter') handleApplyFilters(); }}
+              list="filter-bill-types"
             />
+            <datalist id="filter-bill-types">
+              {DEFAULT_BILL_TYPES.map(type => (
+                <option key={type} value={type} />
+              ))}
+            </datalist>
           </div>
 
           <div style={{ display: 'flex', gap: 8, alignSelf: 'flex-end', flexShrink: 0 }}>

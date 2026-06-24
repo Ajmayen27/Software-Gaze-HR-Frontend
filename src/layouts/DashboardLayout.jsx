@@ -187,32 +187,99 @@ const DashboardLayout = () => {
 
       {/* ── Main Content ─────────────────────────────────────────────────────── */}
       <main className="dashboard-main">
-        <header className="dashboard-header">
+        <header className="dashboard-header" style={{
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+          padding: '0 24px'
+        }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-              SoftwareGaze HR Management
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ 
+                fontWeight: 800, 
+                fontSize: '15px', 
+                color: 'var(--primary)', 
+                letterSpacing: '-0.3px',
+                fontFamily: 'var(--font-family)'
+              }}>
+                SoftwareGaze
+              </span>
+              <span style={{ 
+                height: '12px', 
+                width: '1px', 
+                background: 'var(--border-color)' 
+              }} />
+              <span style={{ 
+                fontSize: '13px', 
+                fontWeight: 500, 
+                color: 'var(--text-secondary)',
+                letterSpacing: '-0.1px'
+              }}>
+                HR Portal
+              </span>
+              <span style={{
+                marginLeft: '6px',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: 'var(--success)',
+                display: 'inline-block',
+                boxShadow: '0 0 0 2px rgba(22, 163, 74, 0.2)'
+              }} title="Systems Operational" />
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {!isEmployee && !isClient && <NotificationBell />}
 
             {role && (
-              <span className="badge badge-info">{role.replace('ROLE_', '')}</span>
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.8px',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                background: 'var(--primary-light)',
+                color: 'var(--primary)',
+                border: '1px solid rgba(79, 70, 229, 0.15)',
+                boxShadow: 'var(--shadow-sm)',
+                marginRight: '4px'
+              }}>
+                {role.replace('ROLE_', '')}
+              </span>
             )}
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: '12px',
-              fontWeight: 600,
-            }}>
-              {role ? role.charAt(role.indexOf('_') + 1) || 'U' : 'U'}
-            </div>
+            
+            <Link 
+              to={isEmployee ? "/my-profile" : isClient ? "/client-profile" : "/my-profile"}
+              style={{ display: 'flex', textDecoration: 'none' }}
+            >
+              <div style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: 700,
+                boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+                border: '2px solid #ffffff',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out'
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.4)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.25)';
+              }}
+              title="View Profile"
+              >
+                {role ? role.charAt(role.indexOf('_') + 1) || 'U' : 'U'}
+              </div>
+            </Link>
           </div>
         </header>
 

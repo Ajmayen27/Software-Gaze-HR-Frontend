@@ -181,229 +181,616 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
-  const StatCard = ({ icon: Icon, label, value, color, bg }) => (
-    <div className="stat-card" style={{ transition: 'transform 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
-      <div className="stat-icon" style={{ background: bg, color }}>
-        <Icon size={22} />
-      </div>
-      <div>
-        <div className="stat-value" style={{ fontSize: '24px', fontWeight: '700' }}>{loading ? '—' : value}</div>
-        <div className="stat-label" style={{ fontSize: '13px', fontWeight: '500' }}>{label}</div>
-      </div>
-    </div>
-  );
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  const getFormattedDate = () => {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
   const TICKET_COLORS = { 'OPEN': '#ef4444', 'IN PROGRESS': '#f59e0b', 'WAITING FOR CLIENT': '#3b82f6', 'RESOLVED': '#10b981', 'CLOSED': '#6b7280' };
   const CLIENT_COLORS = { 'Active': '#10b981', 'Inactive': '#ef4444' };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '30px' }}>
-      {/* Page Header */}
-      <div className="page-header" style={{ marginBottom: '0' }}>
-        <div>
-          <h1>Admin Dashboard</h1>
-          <p>Comprehensive overview of SoftwareGaze HR Management System</p>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px', paddingBottom: '40px' }}>
+      
+      {/* Dynamic Welcome Hero Section */}
+      <div style={{
+        background: 'linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%)',
+        borderRadius: '16px',
+        padding: '32px',
+        color: '#ffffff',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.25)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Abstract design elements */}
+        <div style={{
+          position: 'absolute', right: '-5%', top: '-20%',
+          width: '280px', height: '280px', borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.12)', filter: 'blur(35px)'
+        }} />
+        <div style={{
+          position: 'absolute', right: '15%', bottom: '-30%',
+          width: '180px', height: '180px', borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.08)', filter: 'blur(25px)'
+        }} />
+
+        <div style={{ zIndex: 1 }}>
+          <span style={{
+            fontSize: '11px',
+            textTransform: 'uppercase',
+            letterSpacing: '1.5px',
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontWeight: 700,
+            background: 'rgba(255, 255, 255, 0.15)',
+            padding: '4px 10px',
+            borderRadius: '20px',
+            backdropFilter: 'blur(4px)'
+          }}>
+            {getFormattedDate()}
+          </span>
+          <h1 style={{ color: '#ffffff', fontSize: '28px', fontWeight: 800, margin: '14px 0 6px 0', letterSpacing: '-0.5px' }}>
+            {getGreeting()}, Admin 👋
+          </h1>
+          <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', margin: 0, fontWeight: 400 }}>
+            Here is a comprehensive overview of your SoftwareGaze HR workspace today.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button variant="ghost" onClick={() => navigate('/payroll/runs')}>
-            <Play size={14} /> Run Payroll
-          </Button>
-          <Button className="btn-primary" onClick={() => navigate('/employees/new')}>
-            <Plus size={14} /> Add Employee
-          </Button>
+
+        <div style={{ display: 'flex', gap: '12px', zIndex: 1 }}>
+          <button 
+            className="btn"
+            onClick={() => navigate('/payroll/runs')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              color: '#ffffff',
+              backdropFilter: 'blur(4px)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+          >
+            <Play size={13} fill="#fff" /> Run Payroll
+          </button>
+          <button 
+            className="btn"
+            onClick={() => navigate('/employees/new')}
+            style={{
+              background: '#ffffff',
+              color: '#4f46e5',
+              border: '1px solid #ffffff',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'none'}
+          >
+            <Plus size={14} style={{ strokeWidth: 3 }} /> Add Employee
+          </button>
         </div>
       </div>
 
       {/* KPI Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-        <StatCard icon={Users} label="Total Employees" value={stats.totalEmployees} color="#3b82f6" bg="rgba(59, 130, 246, 0.15)" />
-        <StatCard icon={Briefcase} label="Total Clients" value={stats.totalClients} color="#8b5cf6" bg="rgba(139, 92, 246, 0.15)" />
-        <StatCard icon={Ticket} label="Active Tickets" value={stats.openTickets} color="#f59e0b" bg="rgba(245, 158, 11, 0.15)" />
-        <StatCard icon={Building2} label="Departments" value={stats.departments} color="#10b981" bg="rgba(16, 185, 129, 0.15)" />
-      </div>
-
-      {/* Charts Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
-
-        {/* Employee Department Distribution */}
-        <div className="card" style={{ padding: '20px' }}>
-          <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)' }}>Employees by Department</h3>
-          <div style={{ height: '250px', width: '100%' }}>
-            {loading ? (
-              <div className="spinner" style={{ margin: '100px auto' }} />
-            ) : departmentData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} allowDecimals={false} />
-                  <RechartsTooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+        
+        {/* Stat 1: Employees */}
+        <div className="stat-card" style={{
+          padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px',
+          border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer'
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-3px)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          e.currentTarget.style.borderColor = '#4f46e5';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+          e.currentTarget.style.borderColor = 'var(--border-color)';
+        }}
+        onClick={() => navigate('/employees')}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Employees
+            </span>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(79, 70, 229, 0.08)', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={20} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {loading ? '—' : stats.totalEmployees}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ color: 'var(--success)', fontWeight: 600 }}>{stats.activeEmployees}</span> active in workspace
+            </div>
+            {/* Progress Bar indicator */}
+            {!loading && stats.totalEmployees > 0 && (
+              <div style={{ height: '4px', width: '100%', background: 'var(--border-light)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: '#4f46e5', width: `${(stats.activeEmployees / stats.totalEmployees) * 100}%` }} />
+              </div>
             )}
           </div>
         </div>
 
-        {/* Support Tickets Status */}
-        <div className="card" style={{ padding: '20px' }}>
-          <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)' }}>Support Tickets Status</h3>
-          <div style={{ height: '250px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {loading ? (
-              <div className="spinner" />
-            ) : ticketStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={ticketStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
-                    {ticketStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={TICKET_COLORS[entry.name] || COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ color: 'var(--text-muted)' }}>No ticket data available</div>
+        {/* Stat 2: Clients */}
+        <div className="stat-card" style={{
+          padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px',
+          border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer'
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-3px)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          e.currentTarget.style.borderColor = '#8b5cf6';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+          e.currentTarget.style.borderColor = 'var(--border-color)';
+        }}
+        onClick={() => navigate('/clients')}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Clients
+            </span>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Briefcase size={20} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {loading ? '—' : stats.totalClients}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ color: 'var(--success)', fontWeight: 600 }}>{stats.activeClients}</span> active accounts
+            </div>
+            {/* Progress Bar indicator */}
+            {!loading && stats.totalClients > 0 && (
+              <div style={{ height: '4px', width: '100%', background: 'var(--border-light)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: '#8b5cf6', width: `${(stats.activeClients / stats.totalClients) * 100}%` }} />
+              </div>
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
-            {ticketStatusData.map((entry, index) => (
-              <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: TICKET_COLORS[entry.name] || COLORS[index % COLORS.length] }} />
-                <span>{entry.name}: {entry.value}</span>
+        </div>
+
+        {/* Stat 3: Active Tickets */}
+        <div className="stat-card" style={{
+          padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px',
+          border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer'
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-3px)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          e.currentTarget.style.borderColor = '#f59e0b';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+          e.currentTarget.style.borderColor = 'var(--border-color)';
+        }}
+        onClick={() => navigate('/support-tickets')}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Active Tickets
+            </span>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ticket size={20} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {loading ? '—' : stats.openTickets}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              out of <span style={{ fontWeight: 600 }}>{stats.totalTickets}</span> total tickets logged
+            </div>
+            {/* Progress Bar indicator */}
+            {!loading && stats.totalTickets > 0 && (
+              <div style={{ height: '4px', width: '100%', background: 'var(--border-light)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: '#f59e0b', width: `${(stats.openTickets / stats.totalTickets) * 100}%` }} />
               </div>
-            ))}
+            )}
+          </div>
+        </div>
+
+        {/* Stat 4: Departments */}
+        <div className="stat-card" style={{
+          padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px',
+          border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer'
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-3px)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          e.currentTarget.style.borderColor = '#10b981';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+          e.currentTarget.style.borderColor = 'var(--border-color)';
+        }}
+        onClick={() => navigate('/lookup/departments')}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Departments
+            </span>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Building2 size={20} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {loading ? '—' : stats.departments}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              with <span style={{ fontWeight: 600 }}>{stats.salaryGroups}</span> salary components
+            </div>
+            <div style={{ height: '4px', width: '100%', background: 'var(--border-light)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: '#10b981', width: '100%' }} />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Primary Visualizations Block (Area and Bar charts side-by-side or stacked) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
+        
+        {/* Monthly Expenses Chart */}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Company Monthly Expenses</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Payroll cost distributions over time</p>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 600, background: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6', padding: '4px 10px', borderRadius: '20px' }}>
+              Monthly Gross CTC
+            </span>
+          </div>
+
+          <div style={{ height: '280px', width: '100%' }}>
+            {loading ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+            ) : payrollData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={payrollData} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border-light)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
+                  <RechartsTooltip 
+                    cursor={{ stroke: 'rgba(139, 92, 246, 0.2)', strokeWidth: 1 }}
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      background: 'var(--bg-card)', 
+                      border: '1px solid var(--border-color)', 
+                      boxShadow: 'var(--shadow-lg)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-family)'
+                    }} 
+                    formatter={(value) => [`৳${value.toLocaleString()}`, 'Total Expense']} 
+                  />
+                  <Area type="monotone" dataKey="expense" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No expense data available</div>
+            )}
+          </div>
+        </div>
+
+        {/* Employees by Department */}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Employees by Department</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Staff headcount spread across divisions</p>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 600, background: 'rgba(79, 70, 229, 0.08)', color: '#4f46e5', padding: '4px 10px', borderRadius: '20px' }}>
+              Headcount
+            </span>
+          </div>
+
+          <div style={{ height: '280px', width: '100%' }}>
+            {loading ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+            ) : departmentData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={departmentData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.85}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.4}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border-light)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} allowDecimals={false} />
+                  <RechartsTooltip 
+                    cursor={{ fill: 'rgba(79, 70, 229, 0.04)' }} 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      background: 'var(--bg-card)', 
+                      border: '1px solid var(--border-color)', 
+                      boxShadow: 'var(--shadow-lg)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-family)'
+                    }} 
+                  />
+                  <Bar dataKey="count" fill="url(#colorCount)" radius={[6, 6, 0, 0]} maxBarSize={45} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No department data registered</div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Donut Distribution Metrics */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+        
+        {/* Support Tickets Status */}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Support Tickets</h3>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Ticket allocations by current status</p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', height: '180px' }}>
+            <div style={{ flex: 1, height: '100%', minWidth: 140 }}>
+              {loading ? (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+              ) : ticketStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={ticketStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
+                      {ticketStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={TICKET_COLORS[entry.name.toUpperCase()] || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      contentStyle={{ 
+                        borderRadius: '10px', 
+                        background: 'var(--bg-card)', 
+                        border: '1px solid var(--border-color)', 
+                        boxShadow: 'var(--shadow-md)',
+                        fontSize: '11px' 
+                      }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No active tickets</div>
+              )}
+            </div>
+
+            {/* Custom Side Legend */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, paddingRight: '10px' }}>
+              {ticketStatusData.map((entry, index) => (
+                <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: TICKET_COLORS[entry.name.toUpperCase()] || COLORS[index % COLORS.length] }} />
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {entry.name}: <strong style={{ color: 'var(--text-primary)' }}>{entry.value}</strong>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Client Status Distribution */}
-        <div className="card" style={{ padding: '20px' }}>
-          <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)' }}>Client Status</h3>
-          <div style={{ height: '250px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {loading ? (
-              <div className="spinner" />
-            ) : clientStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={clientStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
-                    {clientStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CLIENT_COLORS[entry.name] || COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ color: 'var(--text-muted)' }}>No client data available</div>
-            )}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Client Distribution</h3>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Client health status metric</p>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
-            {clientStatusData.map((entry, index) => (
-              <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: CLIENT_COLORS[entry.name] || COLORS[index % COLORS.length] }} />
-                <span>{entry.name}: {entry.value}</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', height: '180px' }}>
+            <div style={{ flex: 1, height: '100%', minWidth: 140 }}>
+              {loading ? (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+              ) : clientStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={clientStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
+                      {clientStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CLIENT_COLORS[entry.name] || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      contentStyle={{ 
+                        borderRadius: '10px', 
+                        background: 'var(--bg-card)', 
+                        border: '1px solid var(--border-color)', 
+                        boxShadow: 'var(--shadow-md)',
+                        fontSize: '11px' 
+                      }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No clients recorded</div>
+              )}
+            </div>
+
+            {/* Custom Side Legend */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, paddingRight: '20px' }}>
+              {clientStatusData.map((entry, index) => (
+                <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: CLIENT_COLORS[entry.name] || COLORS[index % COLORS.length] }} />
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {entry.name}: <strong style={{ color: 'var(--text-primary)' }}>{entry.value}</strong>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Action Center Section */}
+      <div>
+        <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px', color: 'var(--text-primary)' }}>Quick Management Center</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+          {[
+            { label: 'Add Employee', desc: 'Onboard team member', icon: Users, path: '/employees/new', color: '#4f46e5', bg: 'rgba(79, 70, 229, 0.06)' },
+            { label: 'Register Support', desc: 'Create support account', icon: UserPlus, path: '/support-staff/register', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.06)' },
+            { label: 'Manage Clients', desc: 'View current client list', icon: Briefcase, path: '/clients', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.06)' },
+            { label: 'Support Tickets', desc: 'Monitor system tickets', icon: AlertCircle, path: '/support-tickets', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.06)' },
+            { label: 'Run Payroll', desc: 'Process salaries & runs', icon: Wallet, path: '/payroll/runs', color: '#10b981', bg: 'rgba(16, 185, 129, 0.06)' },
+          ].map(action => (
+            <div 
+              key={action.label} 
+              className="card" 
+              style={{ 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '14px', 
+                padding: '20px 16px', 
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)' 
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.borderColor = action.color;
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }} 
+              onMouseOut={e => {
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+              }}
+              onClick={() => navigate(action.path)}
+            >
+              <div style={{ 
+                width: '42px', 
+                height: '42px', 
+                borderRadius: '10px', 
+                background: action.bg, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                color: action.color, 
+                flexShrink: 0 
+              }}>
+                <action.icon size={20} />
               </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-
-      {/* Monthly Expenses Chart */}
-      <div className="card" style={{ padding: '20px' }}>
-        <h3 style={{ fontSize: '15px', marginBottom: '20px', color: 'var(--text-primary)' }}>Company Monthly Expenses (Payroll)</h3>
-        <div style={{ height: '300px', width: '100%' }}>
-          {loading ? (
-            <div className="spinner" style={{ margin: '100px auto' }} />
-          ) : payrollData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={payrollData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(value) => `৳${value.toLocaleString()}`} />
-                <RechartsTooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} formatter={(value) => [`৳${value.toLocaleString()}`, 'Total Expense']} />
-                <Area type="monotone" dataKey="expense" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No expense data available</div>
-          )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 650, fontSize: '13px', color: 'var(--text-primary)' }}>{action.label}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>
+                  {action.desc}
+                </div>
+              </div>
+              <ArrowRight size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Quick Actions (Compact) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-        {[
-          { label: 'Add Employee', desc: 'Onboard a new team member', icon: Users, path: '/employees/new', color: '#3b82f6' },
-          { label: 'Register Support', desc: 'Create support staff account', icon: UserPlus, path: '/support-staff/register', color: '#7c3aed' },
-          { label: 'View Clients', desc: 'Manage your client base', icon: Briefcase, path: '/clients', color: '#8b5cf6' },
-          { label: 'Support Tickets', desc: 'Resolve client issues', icon: AlertCircle, path: '/support-tickets', color: '#f59e0b' },
-          { label: 'Run Payroll', desc: 'Process monthly salaries', icon: Wallet, path: '/payroll/runs', color: '#10b981' },
-        ].map(action => (
-          <div key={action.label} className="card" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', padding: '16px', transition: 'all 0.2s' }}
-            onMouseOver={e => e.currentTarget.style.borderColor = action.color} onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            onClick={() => navigate(action.path)}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${action.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: action.color, flexShrink: 0 }}>
-              <action.icon size={20} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: '13px' }}>{action.label}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{action.desc}</div>
-            </div>
-            <ArrowRight size={14} color="var(--text-muted)" />
-          </div>
-        ))}
-      </div>
+      {/* Elegant Data Tables Side-by-Side */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
 
-      {/* Data Tables Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', gridAutoRows: 'min-content' }}>
-
-        {/* Recent Employees */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '15px', margin: 0 }}>Recent Employees</h3>
-            <Button variant="ghost" onClick={() => navigate('/employees')} style={{ fontSize: '12px', padding: '4px 10px' }}>
-              View All <ArrowRight size={12} />
-            </Button>
+        {/* Recent Employees Table */}
+        <div className="card" style={{ padding: 0, borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Recent Employees</h3>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Latest additions to the directory</p>
+            </div>
+            <button 
+              className="btn btn-secondary btn-sm" 
+              onClick={() => navigate('/employees')} 
+              style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '6px' }}
+            >
+              View All <ArrowRight size={12} style={{ marginLeft: 2 }} />
+            </button>
           </div>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Employee Name</th>
                 <th>Department</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: '40px' }}>
+                    <div className="spinner" style={{ margin: '0 auto' }} />
+                  </td>
+                </tr>
               ) : recentEmployees.length === 0 ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No employees found.</td></tr>
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                    No employees registered yet.
+                  </td>
+                </tr>
               ) : (
                 recentEmployees.map(emp => (
                   <tr key={emp.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/employees/${emp.id}/profile`)}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '12px', flexShrink: 0 }}>
-                          {emp.name?.charAt(0)?.toUpperCase() || 'U'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ 
+                          width: '32px', 
+                          height: '32px', 
+                          borderRadius: '50%', 
+                          background: 'linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%)', 
+                          color: '#ffffff', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          fontWeight: 600, 
+                          fontSize: '11px', 
+                          flexShrink: 0 
+                        }}>
+                          {emp.name?.charAt(0)?.toUpperCase() || 'E'}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '13px' }}>{emp.name}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{emp.designation || 'Employee'}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>{emp.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>{emp.designation || 'Designation'}</div>
                         </div>
                       </div>
                     </td>
-                    <td>{emp.department || '—'}</td>
-                    <td><span className={`badge ${emp.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'}`}>{emp.status}</span></td>
+                    <td>
+                      <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{emp.department || '—'}</span>
+                    </td>
+                    <td>
+                      <span className={`badge ${emp.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '10px', padding: '3px 8px' }}>
+                        {emp.status}
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}
@@ -411,36 +798,65 @@ const Dashboard = () => {
           </table>
         </div>
 
-        {/* Recent Tickets */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '15px', margin: 0 }}>Recent Support Tickets</h3>
-            <Button variant="ghost" onClick={() => navigate('/support-tickets')} style={{ fontSize: '12px', padding: '4px 10px' }}>
-              View All <ArrowRight size={12} />
-            </Button>
+        {/* Recent Tickets Table */}
+        <div className="card" style={{ padding: 0, borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Recent Tickets</h3>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Latest support logs from clients</p>
+            </div>
+            <button 
+              className="btn btn-secondary btn-sm" 
+              onClick={() => navigate('/support-tickets')} 
+              style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '6px' }}
+            >
+              View All <ArrowRight size={12} style={{ marginLeft: 2 }} />
+            </button>
           </div>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Subject</th>
-                <th>Status</th>
+                <th>Subject & Client</th>
+                <th>Status Badge</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="2" style={{ textAlign: 'center', padding: '32px' }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
+                <tr>
+                  <td colSpan="2" style={{ textAlign: 'center', padding: '40px' }}>
+                    <div className="spinner" style={{ margin: '0 auto' }} />
+                  </td>
+                </tr>
               ) : recentTickets.length === 0 ? (
-                <tr><td colSpan="2" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No recent tickets.</td></tr>
+                <tr>
+                  <td colSpan="2" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                    No support tickets logged.
+                  </td>
+                </tr>
               ) : (
                 recentTickets.map(ticket => (
                   <tr key={ticket.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/support-tickets/${ticket.id}`)}>
                     <td>
-                      <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '13px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {ticket.subject}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {ticket.subject}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {ticket.clientName || ticket.clientId || 'Client'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ticket.clientName || ticket.clientId || 'Unknown Client'}</div>
                     </td>
-                    <td><span className={`badge`} style={{ backgroundColor: `${TICKET_COLORS[ticket.status] || '#6b7280'}20`, color: TICKET_COLORS[ticket.status] || '#6b7280' }}>{ticket.status?.replace('_', ' ')}</span></td>
+                    <td>
+                      <span className="badge" style={{ 
+                        backgroundColor: `${TICKET_COLORS[ticket.status] || '#6b7280'}12`, 
+                        color: TICKET_COLORS[ticket.status] || '#6b7280',
+                        fontSize: '10px',
+                        padding: '3px 8px',
+                        border: `1px solid ${TICKET_COLORS[ticket.status] || '#6b7280'}25`
+                      }}>
+                        {ticket.status?.replaceAll('_', ' ')}
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}
