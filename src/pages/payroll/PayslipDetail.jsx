@@ -130,11 +130,11 @@ const PayslipDetail = () => {
 
       {/* Salary Breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <SalaryTable title="💰 Earnings" items={earnings} color="var(--success)" />
-        <SalaryTable title="📉 Deductions" items={deductions} color="var(--danger)" />
+        <SalaryTable title=" Earnings" items={earnings} color="var(--success)" />
+        <SalaryTable title=" Deductions" items={deductions} color="var(--danger)" />
       </div>
 
-      <SalaryTable title="🏢 Employer Contributions" items={employerContribs} color="var(--info)" />
+      <SalaryTable title=" Employer Contributions" items={employerContribs} color="var(--info)" />
 
       {/* Summary */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>

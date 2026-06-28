@@ -19,17 +19,18 @@ const AuthLayout = () => {
 
   return (
     <div className="auth-layout-container">
-      {/* Absolute Professional Logo placement at Top Left */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        style={{ position: 'absolute', top: '30px', left: '40px', zIndex: 50 }}
-      >
-        <img src={logo} alt="SoftwareGaze Logo" style={{ height: '40px', objectFit: 'contain' }} />
-      </motion.div>
-
       <div className="auth-form-side">
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="auth-brand-mark"
+        >
+          <img src={logo} alt="SoftwareGaze Logo" className="auth-logo" />
+          <div className="auth-brand-text">
+             <span className="auth-brand-subtitle">HR Platform</span>
+          </div>
+        </motion.div>
         <Outlet />
       </div>
 

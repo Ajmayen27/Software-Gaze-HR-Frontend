@@ -99,6 +99,9 @@ const Login = () => {
         </motion.div>
       </form>
 
+      <motion.div variants={itemVariants} style={{ textAlign: 'center', marginTop: '28px', fontSize: '14px', color: 'var(--text-muted)' }}>
+        Don't have an account yet? <Link to="/register" style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>Register now</Link>
+      </motion.div>
     </motion.div>
   );
 };

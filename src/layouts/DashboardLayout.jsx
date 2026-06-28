@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../components/NotificationBell';
+import ClientNotificationBell from '../components/ClientNotificationBell';
+import logo from '../assets/Logo_SG-removebg-preview.png';
 import {
   LayoutDashboard, Users, Wallet, Building2,
   User, Settings, LogOut, ChevronDown,
-  Briefcase, Headset, Building, UserPlus, Receipt
+  Briefcase, Headset, Building, UserPlus, Receipt, Clock, Calendar
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -16,6 +18,22 @@ const DashboardLayout = () => {
   const isSupport = typeof role === 'string' && role.toUpperCase().includes('SUPPORT');
   const isAdminOrManager = typeof role === 'string' && (role.toUpperCase().includes('ADMIN') || role.toUpperCase().includes('MANAGER'));
   const [openMenus, setOpenMenus] = useState({ payroll: false, organization: false });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   if (loading) return null;
   if (!isAuthenticated || !role) return <Navigate to="/login" replace />;
@@ -83,21 +101,32 @@ const DashboardLayout = () => {
       <aside className="dashboard-sidebar">
         {/* Logo */}
         <div style={{
-          padding: '16px 18px',
+          padding: '18px 20px 16px',
           borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
+          gap: '12px',
+          background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(14, 165, 233, 0.05))',
         }}>
-          <img
-            src="/logo.png"
-            alt="SoftwareGaze"
-            style={{ height: '32px', objectFit: 'contain' }}
-            onError={e => { e.target.style.display = 'none'; }}
-          />
-          <span style={{ display: 'none' }}>
-            <Briefcase color="var(--primary)" size={24} />
-          </span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px',
+            borderRadius: '14px',
+            background: 'rgba(255,255,255,0.9)',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+          }}>
+            <img
+              src={logo}
+              alt="SoftwareGaze"
+              style={{ height: '42px', width: '42px', objectFit: 'contain' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>SoftwareGaze</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>HR Platform</span>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -149,7 +178,7 @@ const DashboardLayout = () => {
                 <NavItem to="/support/dashboard" icon={LayoutDashboard}>Support Dashboard</NavItem>
               )}
               {role === 'ROLE_ADMIN' && (
-                <NavItem to="/support-staff/register" icon={UserPlus}>Create Support Staff</NavItem>
+                <NavItem to="/support-staff/register" icon={UserPlus}>Support Staff</NavItem>
               )}
               <NavItem to="/support/tickets" icon={Headset}>
                 {isClient ? 'My Tickets' : 'Support Tickets'}
@@ -213,98 +242,140 @@ const DashboardLayout = () => {
       {/* ── Main Content ─────────────────────────────────────────────────────── */}
       <main className="dashboard-main">
         <header className="dashboard-header" style={{
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
-          padding: '0 24px'
+          background: '#FFFFFF',
+          borderBottom: '1px solid var(--border-color)',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+          padding: '0 24px',
+          position: 'relative'
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ 
-                fontWeight: 800, 
-                fontSize: '15px', 
-                color: 'var(--primary)', 
-                letterSpacing: '-0.3px',
-                fontFamily: 'var(--font-family)'
-              }}>
-                SoftwareGaze
-              </span>
-              <span style={{ 
-                height: '12px', 
-                width: '1px', 
-                background: 'var(--border-color)' 
-              }} />
-              <span style={{ 
-                fontSize: '13px', 
-                fontWeight: 500, 
-                color: 'var(--text-secondary)',
-                letterSpacing: '-0.1px'
-              }}>
-                HR Portal
-              </span>
-              <span style={{
-                marginLeft: '6px',
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: 'var(--success)',
-                display: 'inline-block',
-                boxShadow: '0 0 0 2px rgba(22, 163, 74, 0.2)'
-              }} title="Systems Operational" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', height: '100%' }}>
+            {/* Left Section - Branding */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: '0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ 
+                  fontWeight: 700, 
+                  fontSize: '15px', 
+                  color: 'var(--primary)', 
+                  letterSpacing: '-0.3px',
+                  fontFamily: 'var(--font-family)'
+                }}>
+                  SoftwareGaze
+                </span>
+                <span style={{ 
+                  height: '16px', 
+                  width: '1px', 
+                  background: 'var(--border-color)' 
+                }} />
+                <span style={{ 
+                  fontSize: '13px', 
+                  fontWeight: 500, 
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '-0.1px'
+                }}>
+                  HR Platform
+                </span>
+              </div>
             </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {!isEmployee && !isClient && <NotificationBell />}
 
-            {role && (
-              <span style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-                padding: '4px 10px',
-                borderRadius: '20px',
-                background: 'var(--primary-light)',
-                color: 'var(--primary)',
-                border: '1px solid rgba(79, 70, 229, 0.15)',
-                boxShadow: 'var(--shadow-sm)',
-                marginRight: '4px'
-              }}>
-                {role.replace('ROLE_', '')}
-              </span>
-            )}
-            
-            <Link 
-              to={isEmployee ? "/my-profile" : isClient ? "/client-profile" : "/my-profile"}
-              style={{ display: 'flex', textDecoration: 'none' }}
-            >
+            {/* Right Section - Actions & Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', justifyContent: 'flex-end' }}>
+              {/* Live Clock and Calendar - Industry Standard */}
               <div style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontWeight: 700,
-                boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
-                border: '2px solid #ffffff',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-in-out'
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.4)';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.25)';
-              }}
-              title="View Profile"
-              >
-                {role ? role.charAt(role.indexOf('_') + 1) || 'U' : 'U'}
+                gap: '20px',
+                paddingLeft: '24px',
+                borderLeft: '1px solid var(--border-color)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <Clock size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: 500, 
+                    color: 'var(--text-secondary)',
+                    fontFamily: 'monospace',
+                    letterSpacing: '0.5px',
+                    minWidth: '70px'
+                  }}>
+                    {formatTime(currentTime)}
+                  </span>
+                </div>
+
+                <span style={{ width: '1px', height: '16px', background: 'var(--border-color)' }} />
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <Calendar size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: 500, 
+                    color: 'var(--text-secondary)',
+                    minWidth: '85px'
+                  }}>
+                    {formatDate(currentTime)}
+                  </span>
+                </div>
               </div>
-            </Link>
+
+            {isClient ? <ClientNotificationBell /> : (!isEmployee && <NotificationBell />)}
+
+              {role && (
+                <span style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.8px',
+                  padding: '5px 10px',
+                  borderRadius: '6px',
+                  background: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  border: '1px solid rgba(79, 70, 229, 0.2)',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {role.replace('ROLE_', '')}
+                </span>
+              )}
+              
+              <Link 
+                to={isEmployee ? "/my-profile" : isClient ? "/client-profile" : "/my-profile"}
+                style={{ display: 'flex', textDecoration: 'none' }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 8px rgba(79, 70, 229, 0.2)',
+                  border: '2px solid #ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.3)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.2)';
+                }}
+                title="View Profile"
+                >
+                  {role ? role.charAt(role.indexOf('_') + 1) || 'U' : 'U'}
+                </div>
+              </Link>
+            </div>
           </div>
         </header>
 

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { axiosInstance } from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Building2, Wallet, Plus, Play, CircleDollarSign, TrendingUp, ArrowRight, Briefcase, Ticket, AlertCircle, UserPlus } from 'lucide-react';
+import { Users, UserCheck, Building2, Wallet, Plus, Play, CircleDollarSign, TrendingUp, ArrowRight, Briefcase, Ticket, AlertCircle, UserPlus, DollarSign, Tag } from 'lucide-react';
 import Button from '../components/ui/Button';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area
+  PieChart, Pie, Cell, AreaChart, Area, LineChart, Line
 } from 'recharts';
 
 const Dashboard = () => {
@@ -25,6 +25,10 @@ const Dashboard = () => {
   const [ticketStatusData, setTicketStatusData] = useState([]);
   const [clientStatusData, setClientStatusData] = useState([]);
   const [payrollData, setPayrollData] = useState([]);
+  const [expensesByType, setExpensesByType] = useState([]);
+  const [expensesTrend, setExpensesTrend] = useState([]);
+  const [expensesByTag, setExpensesByTag] = useState([]);
+  const [expenseStats, setExpenseStats] = useState({ totalExpenses: 0, monthlyExpenses: 0, expenseCount: 0 });
   const [recentEmployees, setRecentEmployees] = useState([]);
   const [recentTickets, setRecentTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +36,14 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [empRes, deptRes, sgRes, clientRes, ticketRes, payrollRes] = await Promise.all([
+        const [empRes, deptRes, sgRes, clientRes, ticketRes, payrollRes, expenseRes] = await Promise.all([
           axiosInstance.get('/employees?page=0&size=100&sortBy=createdAt&sortDir=desc').catch(() => null),
           axiosInstance.get('/departments').catch(() => null),
           axiosInstance.get('/salary-groups').catch(() => null),
           axiosInstance.get('/clients?page=0&size=100').catch(() => null),
           axiosInstance.get('/support-tickets?page=0&size=100').catch(() => null),
-          axiosInstance.get('/payroll-runs').catch(() => null)
+          axiosInstance.get('/payroll-runs').catch(() => null),
+          axiosInstance.get('/expenses?page=0&size=500').catch(() => null)
         ]);
 
         // Process Employees
@@ -165,6 +170,92 @@ const Dashboard = () => {
           ];
         }
 
+        // Process Expenses
+        let expenses = [];
+        if (expenseRes) {
+          const expensePage = expenseRes.content || expenseRes.data || expenseRes;
+          if (Array.isArray(expensePage)) expenses = expensePage;
+        }
+
+        // Aggregate Expenses by Type
+        const expenseTypeMap = {};
+        let totalExpenses = 0;
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        let monthlyExpenses = 0;
+
+        expenses.forEach(exp => {
+          if (exp.amount) {
+            totalExpenses += exp.amount;
+            expenseTypeMap[exp.billType || 'Other'] = (expenseTypeMap[exp.billType || 'Other'] || 0) + exp.amount;
+            
+            if (exp.date) {
+              const expDate = new Date(exp.date);
+              if (expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear) {
+                monthlyExpenses += exp.amount;
+              }
+            }
+          }
+        });
+
+        const expenseTypeData = Object.keys(expenseTypeMap)
+          .sort((a, b) => expenseTypeMap[b] - expenseTypeMap[a])
+          .slice(0, 8)
+          .map(key => ({
+            name: key,
+            amount: expenseTypeMap[key]
+          }));
+
+        // Aggregate Expenses by Tag
+        const expenseTagMap = {};
+        expenses.forEach(exp => {
+          if (exp.tag) {
+            expenseTagMap[exp.tag] = (expenseTagMap[exp.tag] || 0) + (exp.amount || 0);
+          }
+        });
+
+        const expenseTagData = Object.keys(expenseTagMap)
+          .map(key => ({
+            name: key,
+            value: expenseTagMap[key]
+          }))
+          .filter(d => d.value > 0);
+
+        // Aggregate Expenses Trend (Last 6 months)
+        const expenseTrendMap = {};
+        const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const monthLabel = `${monthLabels[date.getMonth()]} ${date.getFullYear()}`;
+          expenseTrendMap[monthLabel] = 0;
+        }
+
+        expenses.forEach(exp => {
+          if (exp.date && exp.amount) {
+            const expDate = new Date(exp.date);
+            const monthLabel = `${monthLabels[expDate.getMonth()]} ${expDate.getFullYear()}`;
+            if (expenseTrendMap[monthLabel] !== undefined) {
+              expenseTrendMap[monthLabel] += exp.amount;
+            }
+          }
+        });
+
+        const expenseTrendData = Object.keys(expenseTrendMap).map(key => ({
+          name: key,
+          amount: expenseTrendMap[key]
+        }));
+
+        setExpenseStats({
+          totalExpenses,
+          monthlyExpenses,
+          expenseCount: expenses.length
+        });
+        setExpensesByType(expenseTypeData);
+        setExpensesByTag(expenseTagData);
+        setExpensesTrend(expenseTrendData);
+
         setDepartmentData(deptChartData);
         setTicketStatusData(ticketChartData);
         setClientStatusData(clientChartData);
@@ -198,6 +289,8 @@ const Dashboard = () => {
   };
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  const EXPENSE_COLORS = ['#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#3b82f6', '#6366f1'];
+  const TAG_COLORS = { 'Paid': '#10b981', 'Pending': '#f59e0b', 'Rejected': '#ef4444', 'Draft': '#94a3b8' };
   const TICKET_COLORS = { 'OPEN': '#ef4444', 'IN PROGRESS': '#f59e0b', 'WAITING FOR CLIENT': '#3b82f6', 'RESOLVED': '#10b981', 'CLOSED': '#6b7280' };
   const CLIENT_COLORS = { 'Active': '#10b981', 'Inactive': '#ef4444' };
 
@@ -449,6 +542,144 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Stat 5: Expenses */}
+        <div className="stat-card" style={{
+          padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px',
+          border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer'
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-3px)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          e.currentTarget.style.borderColor = '#f59e0b';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+          e.currentTarget.style.borderColor = 'var(--border-color)';
+        }}
+        onClick={() => navigate('/expenses')}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Expenses
+            </span>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <DollarSign size={20} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {loading ? '—' : `৳${(expenseStats.totalExpenses / 1000).toFixed(1)}K`}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ color: '#f59e0b', fontWeight: 600 }}>৳{(expenseStats.monthlyExpenses / 1000).toFixed(1)}K</span> this month
+            </div>
+            {/* Progress Bar indicator */}
+            {!loading && expenseStats.totalExpenses > 0 && (
+              <div style={{ height: '4px', width: '100%', background: 'var(--border-light)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: '#f59e0b', width: `${Math.min((expenseStats.monthlyExpenses / expenseStats.totalExpenses) * 100, 100)}%` }} />
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Expense Visualizations Block */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
+        
+        {/* Expense Trend Chart */}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Expense Trend</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Monthly operational expenses over time</p>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 600, background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', padding: '4px 10px', borderRadius: '20px' }}>
+              Last 6 Months
+            </span>
+          </div>
+
+          <div style={{ height: '280px', width: '100%' }}>
+            {loading ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+            ) : expensesTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={expensesTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border-light)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}K`} />
+                  <RechartsTooltip 
+                    cursor={{ stroke: 'rgba(245, 158, 11, 0.2)', strokeWidth: 2 }}
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      background: 'var(--bg-card)', 
+                      border: '1px solid var(--border-color)', 
+                      boxShadow: 'var(--shadow-lg)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-family)'
+                    }} 
+                    formatter={(value) => [`৳${value.toLocaleString()}`, 'Total Expense']} 
+                  />
+                  <Line type="monotone" dataKey="amount" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 5 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No expense trend data available</div>
+            )}
+          </div>
+        </div>
+
+        {/* Expenses by Category */}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Expenses by Category</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Breakdown by bill type/category</p>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 600, background: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6', padding: '4px 10px', borderRadius: '20px' }}>
+              {expenseStats.expenseCount} entries
+            </span>
+          </div>
+
+          <div style={{ height: '280px', width: '100%' }}>
+            {loading ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+            ) : expensesByType.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={expensesByType} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} layout="vertical">
+                  <CartesianGrid strokeDasharray="4 4" vertical={true} stroke="var(--border-light)" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}K`} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 500 }} width={100} />
+                  <RechartsTooltip 
+                    cursor={{ fill: 'rgba(139, 92, 246, 0.04)' }} 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      background: 'var(--bg-card)', 
+                      border: '1px solid var(--border-color)', 
+                      boxShadow: 'var(--shadow-lg)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-family)'
+                    }} 
+                    formatter={(value) => [`৳${value.toLocaleString()}`, 'Amount']}
+                  />
+                  <Bar dataKey="amount" fill="#8b5cf6" radius={[0, 6, 6, 0]} maxBarSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No expense category data available</div>
+            )}
+          </div>
+        </div>
+
       </div>
 
       {/* Primary Visualizations Block (Area and Bar charts side-by-side or stacked) */}
@@ -654,6 +885,56 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Expense Status Distribution */}
+        <div className="card" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Expense Status</h3>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Amount distribution by approval status</p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', height: '180px' }}>
+            <div style={{ flex: 1, height: '100%', minWidth: 140 }}>
+              {loading ? (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+              ) : expensesByTag.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={expensesByTag} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="value">
+                      {expensesByTag.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={TAG_COLORS[entry.name] || EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      contentStyle={{ 
+                        borderRadius: '10px', 
+                        background: 'var(--bg-card)', 
+                        border: '1px solid var(--border-color)', 
+                        boxShadow: 'var(--shadow-md)',
+                        fontSize: '11px' 
+                      }} 
+                      formatter={(value) => `৳${value.toLocaleString()}`}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No expense data</div>
+              )}
+            </div>
+
+            {/* Custom Side Legend */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, paddingRight: '10px' }}>
+              {expensesByTag.map((entry, index) => (
+                <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: TAG_COLORS[entry.name] || EXPENSE_COLORS[index % EXPENSE_COLORS.length] }} />
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {entry.name}: <strong style={{ color: 'var(--text-primary)' }}>৳{(entry.value / 1000).toFixed(1)}K</strong>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Action Center Section */}
@@ -666,6 +947,7 @@ const Dashboard = () => {
             { label: 'Manage Clients', desc: 'View current client list', icon: Briefcase, path: '/clients', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.06)' },
             { label: 'Support Tickets', desc: 'Monitor system tickets', icon: AlertCircle, path: '/support-tickets', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.06)' },
             { label: 'Run Payroll', desc: 'Process salaries & runs', icon: Wallet, path: '/payroll/runs', color: '#10b981', bg: 'rgba(16, 185, 129, 0.06)' },
+            { label: 'Track Expenses', desc: 'View all expenses', icon: DollarSign, path: '/expenses', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.06)' },
           ].map(action => (
             <div 
               key={action.label} 
